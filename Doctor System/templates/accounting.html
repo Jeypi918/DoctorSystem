@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Accounting Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <h3>Total PF Transactions</h3>
+    <p class="stat-number">₱ {{ total_transactions|floatformat:2 }}</p>
+  </div>
+  <div class="stat-card">
+    <h3>Total SOA</h3>
+    <p class="stat-number">₱ {{ total_soa|floatformat:2 }}</p>
+  </div>
+  <div class="stat-card">
+    <h3>Doctors</h3>
+    <p class="stat-number">{{ doctor_count }}</p>
+  </div>
+  <div class="stat-card">
+    <h3>Patients</h3>
+    <p class="stat-number">{{ patient_count }}</p>
+  </div>
+</div>
+{% endblock %}

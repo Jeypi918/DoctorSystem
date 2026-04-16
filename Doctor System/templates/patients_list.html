@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Patients Management</h1>
+  <a href="{% url 'patient_add' %}" class="btn-primary">+ Add Patient</a>
+</div>
+
+{% if patients %}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Date of Birth</th>
+          <th>Phone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in patients %}
+          <tr>
+            <td><a href="{% url 'patient_detail' patient.pk %}">{{ patient.first_name }} {{ patient.last_name }}</a></td>
+            <td>{{ patient.dob }}</td>
+            <td>{{ patient.phone }}</td>
+            <td class="actions">
+              <a href="{% url 'patient_edit' patient.pk %}" class="btn-edit">Edit</a>
+              <a href="{% url 'patient_delete' patient.pk %}" class="btn-delete">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="mt-8 w-full px-4">
+    <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
+      <nav class="flex space-x-1 min-w-max">
+        {% if page_obj.has_previous %}<a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">« First</a> | {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}<strong>{{ num }}</strong>{% else %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %} | <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>{% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <p class="no-data">No patients yet. <a href="{% url 'patient_add' %}">Add the first patient</a></p>
+{% endif %}
+{% endblock %}

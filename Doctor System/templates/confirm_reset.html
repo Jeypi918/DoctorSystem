@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header alert alert-warning">
+  <h1>🔑 Reset Password for Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h1>
+</div>
+
+<div class="confirm-card">
+  <p>Reset password to <strong>{{ new_password }}</strong>?</p>
+  
+  <div class="detail-card">
+    <p><strong>Username:</strong> {{ new_password }}</p>
+    <p><strong>New Password:</strong> {{ new_password }}</p>
+    <p class="small">Email: {{ doctor.email }}</p>
+  </div>
+  
+  <form method="post" style="display: inline;">
+    {% csrf_token %}
+<button type="submit" class="bg-navy-500 hover:bg-navy-600 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">Yes, Reset Password</button>
+  </form>
+  
+  <a href="{% url 'doctor_detail' doctor.pk %}" class="bg-gray-200 hover:bg-gray-300 text-gray-900 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-lg inline-block mt-4">Cancel</a>
+</div>
+{% endblock %}

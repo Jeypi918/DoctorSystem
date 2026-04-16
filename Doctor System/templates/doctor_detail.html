@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Dr. {{ doctor.doctors_name }}</h1>
+<div class="flex flex-wrap gap-3 mb-8">
+    <a href="{% url 'doctor_reset_password' doctor.pk %}" class="bg-amber-500 hover:bg-amber-600 text-gray-900 px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Reset Password</a>
+    <a href="{% url 'doctor_edit' doctor.pk %}" class="bg-navy-500 hover:bg-navy-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Edit</a>
+    <a href="{% url 'doctor_delete' doctor.pk %}" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete</a>
+  </div>
+</div>
+
+<div class="detail-card">
+  <div class="detail-row">
+    <span class="label">Full Name:</span>
+    <span class="value">{{ doctor.full_name|default:doctor.first_name|add:" "|add:doctor.last_name|title }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Email:</span>
+    <span class="value"><a href="mailto:{{ doctor.email }}">{{ doctor.email }}</a></span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Mobile:</span>
+    <span class="value">{{ doctor.smsplusmobileno }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">TIN:</span>
+    <span class="value">{{ doctor.tin }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Specialization:</span>
+    <span class="value">{{ doctor.specialization }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Active Consultant:</span>
+    <span class="value">{{ doctor.is_active_consultant }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">EMD ID:</span>
+    <span class="value">{{ doctor.pk_emddoctors }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Class Code:</span>
+    <span class="value">{{ doctor.classcode|default:"—" }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PRC License Type:</span>
+    <span class="value">{{ doctor.prctype|default:"—" }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PRC License No:</span>
+    <span class="value">{{ doctor.prcno }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PRC Expiry Date:</span>
+    <span class="value">{{ doctor.prcexpdate|date:"M d, Y"|default:"—" }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PHIC No:</span>
+    <span class="value">{{ doctor.phicno }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PHIC Expiry Date:</span>
+    <span class="value">{{ doctor.phicexpdate|date:"M d, Y"|default:"—" }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">PMCC No:</span>
+    <span class="value">{{ doctor.pmccno }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Bank Account Name:</span>
+    <span class="value">{{ doctor.bankacctname }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Bank Account No:</span>
+    <span class="value">{{ doctor.bankacctno }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">EWT Rate:</span>
+    <span class="value">{{ doctor.ewtrate_pct }}</span>
+  </div>
+  {% if doctor.pk_emdoctors %}
+  <div class="detail-row">
+    <span class="label">EMD ID:</span>
+    <span class="value">{{ doctor.pk_emdoctors }}</span>
+  </div>
+  {% endif %}
+</div>
+
+<h2>Professional Fee Transactions</h2>
+{% if transactions %}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Patient</th>
+          <th>Amount</th>
+          <th>Reference</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+          <tr>
+            <td>{{ t.date }}</td>
+            <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
+            <td>₱ {{ t.amount }}</td>
+            <td>{{ t.reference|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>No transactions for this doctor.</p>
+{% endif %}
+
+<div class="back-link">
+  <a href="{% url 'doctors' %}">← Back to Doctors</a>
+</div>
+{% endblock %}

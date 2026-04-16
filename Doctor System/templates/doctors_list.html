@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  {% if request.user.userprofile.role == 'admin' %}
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Doctors Profile</h1>
+    <a href="{% url 'doctor_add' %}" class="bg-navy-500 hover:bg-navy-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2">Add Doctor <i class="fa fa-plus"></i></a>
+  </div>
+  {% endif %}
+
+  {% if doctors %}
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Name</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Code</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Specialization</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">PHIC No</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Active</th>
+              <th class="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for doctor in doctors %}
+              <tr class="hover:bg-gray-50 transition-all duration-200">
+                <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                  <div class="flex items-center">
+                    <a href="{% url 'doctor_detail' doctor.pk %}" class="text-navy-600 hover:text-navy-700 font-semibold truncate max-w-xs">{{ doctor.full_name|default:"N/A" }}</a>
+                    <span class="ml-2 text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full font-medium">(MD)</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.pk_emddoctors }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate" title="{{ doctor.specialization|default:'N/A' }}">{{ doctor.specialization|default:"N/A"|truncatechars:50 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.phicno|default:"N/A"|truncatechars:20 }}</td>
+
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <span class="px-3 py-1 rounded-full text-xs font-medium {{ doctor.active|yesno:"bg-green-100 text-green-800, bg-red-100 text-red-800" }}">
+                    {{ doctor.is_active_consultant|default:"No" }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <a href="{% url 'doctor_detail' doctor.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                    <i class="fas fa-eye mr-1"></i> View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-8 w-full px-4">
+        <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
+          <nav class="flex space-x-1 min-w-max">
+          {% if page_obj.has_previous %}
+            <a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">First</a>
+          {% endif %}
+            {% with page_range=page_obj.paginator.page_range current=page_obj.number total=page_obj.paginator.num_pages %}
+              <a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">1</a>
+              {% if current > 4 %}
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% for num in page_range %}
+                {% if num >= current|add:"-2" and num <= current|add:"2" %}
+                  {% if num == current %}
+                    <span class="px-4 py-2 bg-navy-500 text-white rounded-lg font-bold shadow">{{ num }}</span>
+                  {% else %}
+                    <a href="?page={{ num }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors">{{ num }}</a>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {% if current < total|add:"-3" %}
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% if total > 1 %}
+                <a href="?page={{ total }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">{{ total }}</a>
+              {% endif %}
+            {% endwith %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Last</a>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-2xl shadow-lg">
+      <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+      <p class="text-xl text-gray-500 mb-4">No doctors found.</p>
+      <a href="{% url 'doctor_add' %}" class="bg-navy-500 hover:bg-navy-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 inline-block">Add First Doctor</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

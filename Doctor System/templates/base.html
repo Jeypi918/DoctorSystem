@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              50: '#EFF6FF',
+              500: 'var(--primary-navy)',
+              600: 'var(--primary-navy-dark)'
+            },
+            red: { 500: 'var(--accent-red)' },
+            gray: {
+              50: 'var(--neutral-gray)',
+              100: 'var(--gray-100)',
+              200: 'var(--gray-200)',
+              500: 'var(--gray-500)',
+              900: 'var(--gray-900)'
+            },
+            green: { 500: 'var(--success-green)' },
+            amber: { 500: 'var(--warning-amber)' }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="{% static 'styles.css' %}" />
+</head>
+<body>
+<div class="layout min-h-screen bg-gray-50">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="/image/CommonwealthMed.jpg" alt="Hospital Logo" class="logo" />
+        <h2 class="brand-text">Doctor Portal</h2>
+      </div>
+      <ul>
+        <li><a href="{% url 'home' %}"><i class="fa fa-home"></i><span class="link-text">Dashboard</span></a></li>
+        {% if user.is_authenticated %}
+          {% with role=user.userprofile.role|default:'guest' %}
+            {% if role == 'admin' %}
+              <li><a href="{% url 'doctors' %}"><i class="fa fa-user-md"></i> <span class="link-text">Doctors Profile</span></a></li>
+              <li><a href="{% url 'patients' %}"><i class="fa fa-users"></i> <span class="link-text">Patients Management</span></a></li>
+              <li><a href="{% url 'transactions' %}"><i class="fa fa-file"></i> <span class="link-text">PF Transactions</span></a></li>
+              <li><a href="{% url 'statements' %}"><i class="fa fa-folder"></i> <span class="link-text">Statement of Account</span></a></li>
+              <li><a href="{% url 'billing' %}"><i class="fa fa-money-bill"></i> <span class="link-text">Billing</span></a></li>
+              <li><a href="{% url 'accounting' %}"><i class="fa fa-calculator"></i> <span class="link-text">Accounting</span></a></li>
+            {% elif role == 'doctor' %}
+              <li><a href="{% url 'my_doctor' %}"><i class="fa fa-user-md"></i> <span class="link-text">My Doctor Profile</span></a></li>
+            {% elif role == 'billing' %}
+              <li><a href="{% url 'billing' %}"><i class="fa fa-money-bill"></i> <span class="link-text">Billing</span></a></li>
+            {% elif role == 'accounting' %}
+              <li><a href="{% url 'accounting' %}"><i class="fa fa-calculator"></i> <span class="link-text">Accounting</span></a></li>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      </ul>
+      {% if user.is_authenticated %}
+        <a class="logout" href="{% url 'logout' %}"><i class="fa fa-sign-out"></i> <span class="link-text">Log out</span></a>
+      {% else %}
+        <a class="auth" href="{% url 'login' %}">Log in</a>
+        <a class="auth" href="{% url 'signup' %}">Sign up</a>
+      {% endif %}
+    </aside>
+    
+    <!-- Mobile sidebar backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+<main class="content ml-0 md:ml-64 p-6 md:p-8 transition-all duration-300" id="content">
+      <!-- Mobile hamburger button -->
+      <button class="mobile-burger" onclick="toggleSidebar()">
+        <i class="fa fa-bars"></i>
+      </button>
+      
+<div class="page max-w-7xl mx-auto bg-white/30 backdrop-blur-md rounded-2xl p-8 md:p-12 border border-white/30 shadow-2xl">
+        {% block content %}{% endblock %}</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let isMobile = window.innerWidth <= 1024;
+    
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      
+      if (isMobile) {
+        // Mobile: overlay slide-in
+        sidebar.classList.toggle('active');
+        backdrop.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+      } else {
+        // Desktop: width collapse
+        sidebar.classList.toggle('collapsed');
+        content.classList.toggle('collapsed-margin');
+      }
+    }
+    
+    // Close on backdrop click
+    document.getElementById('sidebar-backdrop').addEventListener('click', toggleSidebar);
+    
+    // Close sidebar on window resize (reset state)
+    window.addEventListener('resize', function() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      
+      const newIsMobile = window.innerWidth <= 1024;
+      if (newIsMobile !== isMobile) {
+        // Reset all classes when switching modes
+        sidebar.classList.remove('collapsed', 'active');
+        content.classList.remove('collapsed-margin');
+        backdrop.style.display = 'none';
+        isMobile = newIsMobile;
+      }
+    });
+  </script>
+</body>
+</html>

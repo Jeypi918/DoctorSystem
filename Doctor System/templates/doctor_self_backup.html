@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>My Doctor Profile</h1>
+</div>
+
+{% if error %}
+  <p class="error">{{ error }}</p>
+{% else %}
+  <div class="panel">
+    <h2>Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h2>
+    <p><strong>Email:</strong> {{ doctor.email }}</p>
+    <p><strong>Specialty:</strong> {{ doctor.specialty }}</p>
+  </div>
+
+  <h3>PF Transactions</h3>
+  {% if transactions %}
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Patient</th><th>Amount</th><th>Reference</th></tr></thead>
+      <tbody>
+        {% for t in transactions %}
+          <tr>
+            <td>{{ t.date }}</td>
+            <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
+            <td>₱ {{ t.amount }}</td>
+            <td>{{ t.reference }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No transactions found.</p>
+  {% endif %}
+
+  <h3>Patients</h3>
+  {% if patients %}
+    <ul>
+      {% for p in patients %}
+        <li>{{ p.first_name }} {{ p.last_name }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No connected patients yet.</p>
+  {% endif %}
+
+  <h3>Statements of Account</h3>
+  {% if soa_list %}
+    <table class="data-table">
+      <thead><tr><th>Period</th><th>Total</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for s in soa_list %}
+          <tr>
+            <td>{{ s.start_date }} - {{ s.end_date }}</td>
+            <td>₱ {{ s.filtered_total }}</td>
+            <td>{{ s.created_at|date:'M d, Y' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No statements available.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

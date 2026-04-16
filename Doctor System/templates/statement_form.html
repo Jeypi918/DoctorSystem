@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ title }}</h1>
+</div>
+
+<form method="post" class="form-card">
+  {% csrf_token %}
+  
+  {% if form.non_field_errors %}
+    <div class="alert alert-error">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+  
+  <div class="form-fields">
+    {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <span class="error">{{ field.errors.0 }}</span>
+        {% endif %}
+        {% if field.help_text %}
+          <small>{{ field.help_text|safe }}</small>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Save</button>
+    <a href="{% url 'statements' %}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

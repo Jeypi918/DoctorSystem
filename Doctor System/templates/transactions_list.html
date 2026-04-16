@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>PF Transactions</h1>
+  <a href="{% url 'transaction_add' %}" class="btn-primary">+ Add Transaction</a>
+</div>
+
+<div class="cards mb-8">
+  <div class="card card-doctors">
+    <div class="card-title">Released Checks</div>
+    <div class="card-value">{{ released_count|default:"0" }}</div>
+    <a href="{% url 'released_checks' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+  <div class="card card-patients">
+    <div class="card-title">Unreleased Checks</div>
+    <div class="card-value">0</div>
+    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+  <div class="card card-transactions">
+    <div class="card-title">Outstanding Report</div>
+    <div class="card-value">0</div>
+    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+  <div class="card card-statements">
+    <div class="card-title">Accounts Payable Vouchers</div>
+    <div class="card-value">0</div>
+    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+  <div class="card card-doctors">
+    <div class="card-title">Check Report</div>
+    <div class="card-value">0</div>
+    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+</div>
+
+{% if transactions %}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Doctor</th>
+          <th>Patient</th>
+          <th>Amount</th>
+          <th>Reference</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+          <tr>
+            <td>{{ t.date }}</td>
+            <td>Dr. {{ t.doctor.first_name }} {{ t.doctor.last_name }}</td>
+            <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
+            <td>₱ {{ t.amount }}</td>
+            <td>{{ t.reference|default:"—" }}</td>
+            <td class="actions">
+              <a href="{% url 'transaction_edit' t.pk %}" class="btn-edit">Edit</a>
+              <a href="{% url 'transaction_delete' t.pk %}" class="btn-delete">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="mt-8 w-full px-4">
+    <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
+      <nav class="flex space-x-1 min-w-max">
+        {% if page_obj.has_previous %}<a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">« First</a> | {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}<strong>{{ num }}</strong>{% else %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %} | <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>{% endif %}
+      </nav>
+    </div>
+  </div>
+  {% endif %}
+{% else %}
+  <p class="no-data">No transactions yet. <a href="{% url 'transaction_add' %}">Add the first transaction</a></p>
+{% endif %}
+{% endblock %}

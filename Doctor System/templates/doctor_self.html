@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-header flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 pb-6 border-b-2 border-gray-200">
+  <div>
+    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">My Doctor Profile</h1>
+    <p class="text-gray-600 text-lg">Manage your professional information and activity</p>
+  </div>
+</div>
+
+{% if error %}
+  <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8">
+    <p class="text-red-800 font-semibold">{{ error }}</p>
+  </div>
+{% else %}
+  <!-- Profile Hero Card -->
+  <div class="card card-doctors mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:gap-8 p-8">
+      <div class="profile-avatar w-32 h-32 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6 md:mb-0">
+        <i class="fa fa-user-md text-4xl text-white/90"></i>
+      </div>
+      <div class="flex-1 text-white">
+        <h2 class="text-4xl md:text-5xl font-black mb-2 leading-tight">
+          Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+        </h2>
+        <div class="specialty-badge inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30 mb-4">
+          <i class="fa fa-stethoscope text-lg"></i>
+          <span class="font-semibold text-lg">{{ doctor.specialty }}</span>
+        </div>
+        <p class="text-xl opacity-90 mb-4 flex items-center gap-2">
+          <i class="fa fa-envelope text-lg"></i>
+          <a href="mailto:{{ doctor.email }}" class="hover:text-white/70 transition-colors">{{ doctor.email }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Row -->
+  <div class="cards grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <div class="card card-patients">
+      <div class="card-title">Patients</div>
+      <div class="card-value">{{ patients|length }}</div>
+      <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="card card-transactions">
+      <div class="card-title">Transactions</div>
+      <div class="card-value">{{ transactions|length }}</div>
+      <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="card card-statements">
+      <div class="card-title">Statements</div>
+      <div class="card-value">{{ soa_list|length }}</div>
+      <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Transactions Section -->
+    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+        <i class="fa fa-file-invoice text-navy-500"></i>
+        Recent PF Transactions
+      </h3>
+      {% if transactions %}
+        <div class="table-responsive">
+          <table class="data-table w-full">
+            <thead>
+              <tr class="bg-gray-50/50">
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Amount</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in transactions|slice:":10" %}
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                  <td class="font-medium">{{ t.date }}</td>
+                  <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
+                  <td class="font-bold text-navy-600">₱ {{ t.amount }}</td>
+                  <td>{{ t.reference|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-12">
+          <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i>
+          <p class="text-xl text-gray-500">No transactions yet</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Patients Section -->
+    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+        <i class="fa fa-users text-blue-500"></i>
+        Connected Patients
+      </h3>
+      {% if patients %}
+        <div class="space-y-3 max-h-96 overflow-y-auto">
+          {% for p in patients|slice:":12" %}
+            <div class="flex items-center gap-4 p-4 bg-white/20 rounded-2xl hover:bg-white/30 transition-all">
+              <div class="w-12 h-12 bg-navy-100 rounded-2xl flex items-center justify-center">
+                <i class="fa fa-user text-navy-600 text-lg"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-900 truncate">{{ p.first_name }} {{ p.last_name }}</p>
+                <p class="text-sm text-gray-600">{{ p.phone|default:"No phone" }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-12">
+          <i class="fa fa-users text-6xl text-gray-400 mb-4"></i>
+          <p class="text-xl text-gray-500">No patients connected yet</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Statements Section (Full Width) -->
+  {% if soa_list %}
+  <div class="mt-12">
+    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+      <i class="fa fa-folder text-amber-500"></i>
+      Statements of Account
+    </h3>
+    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl overflow-hidden">
+      <div class="table-responsive">
+        <table class="data-table w-full">
+          <thead>
+            <tr class="bg-gray-50/50">
+              <th>Period</th>
+              <th>Total</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in soa_list %}
+              <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100/50">
+                <td class="font-medium">{{ s.start_date }} - {{ s.end_date }}</td>
+                <td class="font-bold text-2xl text-navy-600">₱ {{ s.filtered_total }}</td>
+                <td>{{ s.created_at|date:'M d, Y' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
