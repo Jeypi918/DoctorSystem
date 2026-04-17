@@ -122,18 +122,9 @@ class StatementOfAccount(models.Model):
 class ReleasedCheck(models.Model):
     checkno = models.CharField(max_length=50, primary_key=True)
     checkdate = models.DateField()
-    releasedate = models.CharField(max_length=20, null=True, blank=True)
+    releasedate = models.DateField(db_column='releasedate', null=True, blank=True)
 
-    def get_releasedate_formatted(self):
-        if self.releasedate:
-            try:
-                # Parse m/d/yyyy -> YYYY-MM-DD
-                from datetime import datetime
-                dt = datetime.strptime(self.releasedate, '%m/%d/%Y')
-                return dt.strftime('%Y-%m-%d')
-            except:
-                pass
-        return self.releasedate or '—'
+
     payee = models.CharField(max_length=255)
     vendorname = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=12, decimal_places=2)

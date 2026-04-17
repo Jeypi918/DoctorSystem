@@ -45,6 +45,8 @@ class StatementOfAccountAdmin(admin.ModelAdmin):
 @admin.register(ReleasedCheck)
 class ReleasedCheckAdmin(admin.ModelAdmin):
     list_display = ('checkno', 'payee', 'amount', 'checkdate', 'releasedate', 'bankname')
+    list_filter = ('bankname', 'checkdate', 'releasedate')
+    search_fields = ('checkno', 'payee', 'vendorname')
     list_filter = ('bankname', 'checkdate')
     search_fields = ('checkno', 'payee', 'vendorname')
 

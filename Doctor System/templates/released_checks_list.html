@@ -27,7 +27,7 @@
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ rc.checkno }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.checkdate|date:"Y-m-d"|default:"—" }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ rc.get_releasedate_formatted }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ rc.releasedate|date:"Y-m-d"|default:"—" }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.payee }}">{{ rc.payee|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.vendorname }}">{{ rc.vendorname|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ rc.amount|floatformat:2 }}</td>

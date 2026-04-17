@@ -243,15 +243,10 @@ class ReleasedCheckListView(ListView):
                 Q(vendorname__icontains=q) |
                 Q(bankname__icontains=q)
             )
-        if date_from or date_to:
-            date_condition = []
-            if date_from:
-                date_condition.append(f"CONVERT(date, releasedate, 101) >= '{date_from}'")
-            if date_to:
-                date_condition.append(f"CONVERT(date, releasedate, 101) <= '{date_to}'")
-            where_clause = " AND ".join(date_condition)
-            if where_clause:
-                queryset = queryset.extra(where=[where_clause])
+        if date_from:
+            queryset = queryset.filter(releasedate__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(releasedate__lte=date_to)
 
         return queryset
 
