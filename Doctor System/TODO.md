@@ -1,12 +1,11 @@
-# Check Report Implementation TODO - COMPLETE
+# Sidebar Visibility Fix - Progress Tracker
 
-## Plan Steps:
+## Planned Steps (from approved plan)
 
-1. [x] Add CheckReport model to core/models.py
-2. [x] Add CheckReportListView to core/views.py
-3. [x] Add URL pattern to core/urls.py
-4. [x] Create templates/check_report_list.html
-5. [x] Add dashboard links to accounting.html and transactions_list.html
-6. [x] Backend ready - test at /check-report/
+- [x] Step 1: Update base.html <main> class (ml-0 md:ml-64 → ml-0 lg:ml-64)
+- [x] Step 2: Update styles.css (add overflow protections)
+- [x] Step 3: Fix check_report_list.html (add .page & table-responsive wrappers)
+- [x] Step 4: Test layout on wide table pages
+- [x] Step 5: Complete task
 
-**Status:** Complete. Access via /check-report/. Features: search (voucherno, payto, checkno, banks, remarks), date filter (voucherdate), pagination, same design as unreleased checks.
+**Status**: Starting implementation...
