@@ -56,7 +56,13 @@ def logout_view(request):
 def home_view(request):
     doctor_count = EmdDoctor.objects.count()
     patient_count = Patient.objects.count()
-    transaction_count = PFTransaction.objects.count()
+    released_count = ReleasedCheck.objects.count()
+    unreleased_count = UnreleasedCheck.objects.count()
+    outstanding_count = OutstandingPayable.objects.count()
+    apv_count = APV.objects.count()
+    check_report_count = CheckReport.objects.count()
+    pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
+    transaction_count = pf_total
     statement_count = StatementOfAccount.objects.count()
     return render(request, 'home.html', {
         'doctor_count': doctor_count,
