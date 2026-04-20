@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.db.models import Q
 from django.db import IntegrityError, connection
-from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable
+from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable, APV, CheckReport
 from .forms import SignUpForm, EmdDoctorForm, PatientForm, PFTransactionForm, StatementOfAccountForm
 from .decorators import admin_required, doctor_required, billing_required, accounting_required
 
@@ -224,6 +224,8 @@ class TransactionListView(ListView):
         context['released_count'] = ReleasedCheck.objects.count()
         context['unreleased_count'] = UnreleasedCheck.objects.count()
         context['outstanding_count'] = OutstandingPayable.objects.count()
+        context['apv_count'] = APV.objects.count()
+        context['check_report_count'] = CheckReport.objects.count()
         return context
 
 class ReleasedCheckListView(ListView):
@@ -313,6 +315,71 @@ class OutstandingReportListView(ListView):
             queryset = queryset.filter(duedate__gte=date_from)
         if date_to:
             queryset = queryset.filter(duedate__lte=date_to)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query_params'] = self.request.GET.urlencode()
+        return context
+
+class APVListView(ListView):
+    model = APV
+    template_name = 'apv_list.html'
+    context_object_name = 'apvouchers'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if q:
+            queryset = queryset.filter(
+                Q(ap_voucher_no__icontains=q) |
+                Q(ap_category__icontains=q) |
+                Q(supplier_type__icontains=q) |
+                Q(payee_name__icontains=q) |
+                Q(remarks_notes__icontains=q) |
+                Q(posted_by__icontains=q)
+            )
+        if date_from:
+            queryset = queryset.filter(ap_voucher_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(ap_voucher_date__lte=date_to)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query_params'] = self.request.GET.urlencode()
+        return context
+
+class CheckReportListView(ListView):
+    model = CheckReport
+    template_name = 'check_report_list.html'
+    context_object_name = 'check_reports'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if q:
+            queryset = queryset.filter(
+                Q(voucherno__icontains=q) |
+                Q(payto__icontains=q) |
+                Q(checkno__icontains=q) |
+                Q(banks__icontains=q) |
+                Q(remarks__icontains=q)
+            )
+        if date_from:
+            queryset = queryset.filter(voucherdate__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(voucherdate__lte=date_to)
 
         return queryset
 
@@ -414,9 +481,11 @@ def accounting_view(request):
     total_soa = StatementOfAccount.objects.aggregate(total=Sum('filtered_total'))['total'] or 0
     doctor_count = EmdDoctor.objects.count()
     patient_count = Patient.objects.count()
+    check_report_count = CheckReport.objects.count()
     return render(request, 'accounting.html', {
         'total_transactions': total_transactions,
         'total_soa': total_soa,
         'doctor_count': doctor_count,
         'patient_count': patient_count,
+        'check_report_count': check_report_count,
     })

@@ -26,14 +26,14 @@
 
   <div class="card card-statements">
     <div class="card-title">Accounts Payable Vouchers</div>
-    <div class="card-value">0</div>
-    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    <div class="card-value">{{ apv_count|default:"0" }}</div>
+    <a href="{% url 'apv_vouchers' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-doctors">
     <div class="card-title">Check Report</div>
-    <div class="card-value">0</div>
-    <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    <div class="card-value">{{ check_report_count|default:"0" }}</div>
+    <a href="{% url 'check_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 </div>
 

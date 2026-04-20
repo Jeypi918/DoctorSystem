@@ -174,4 +174,61 @@ class OutstandingPayable(models.Model):
     def __str__(self):
         return f"{self.docno} - {self.Vendor} - ₱{self.balance}"
 
+class APV(models.Model):
+    ap_voucher_no = models.CharField('AP Voucher No', max_length=50, primary_key=True)
+    ap_voucher_date = models.DateField('AP Voucher Date')
+    ap_category = models.CharField('AP Category', max_length=100, blank=True)
+    supplier_type = models.CharField('Supplier Type', max_length=100, blank=True)
+    payee_name = models.CharField('Payee Name', max_length=255, blank=True)
+    amount = models.DecimalField('Amount', max_digits=12, decimal_places=2)
+    discount_amount = models.DecimalField('Discount Amount', max_digits=12, decimal_places=2, default=0)
+    ewt_rate = models.DecimalField('EWT Rate', max_digits=8, decimal_places=2, default=0)
+    ewt_amount = models.DecimalField('EWT Amount', max_digits=12, decimal_places=2, default=0)
+    net_amount = models.DecimalField('Net Amount', max_digits=12, decimal_places=2)
+    balance = models.DecimalField('Balance', max_digits=12, decimal_places=2)
+    remarks_notes = models.TextField('Remarks/Notes', blank=True)
+    posted_by = models.CharField('Posted By', max_length=255, blank=True)
 
+    class Meta:
+        managed = False
+        db_table = 'apv'
+
+    def __str__(self):
+        return f"{self.ap_voucher_no} - {self.payee_name} - ₱{self.net_amount}"
+
+class CheckReport(models.Model):
+    voucherno = models.CharField(max_length=50, primary_key=True)
+    voucherdate = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    cvtype = models.CharField(max_length=50, blank=True)
+    cashamount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    checkamount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ewtamount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    payto = models.CharField(max_length=255, blank=True)
+    address = models.TextField(blank=True)
+    apvno = models.CharField(max_length=50, blank=True)
+    apvdate = models.DateField(null=True, blank=True)
+    duedate = models.DateField(null=True, blank=True)
+    netamount = models.DecimalField(max_digits=12, decimal_places=2)
+    accountno = models.CharField(max_length=50, blank=True)
+    acctdesc = models.CharField(max_length=255, blank=True)
+    debit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    credit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    banks = models.CharField(max_length=100, blank=True)
+    checkno = models.CharField(max_length=50, blank=True)
+    checkdate = models.DateField(null=True, blank=True)
+    checkamt = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    convertion = models.CharField(max_length=50, blank=True)
+    cvcategory = models.CharField(max_length=50, blank=True)
+    remarks = models.TextField(blank=True)
+    invcno = models.CharField(max_length=50, blank=True)
+    remarksapv = models.TextField(blank=True)
+    releasedate = models.DateField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'check_report'
+
+    def __str__(self):
+        return f"{self.voucherno} - {self.payto} - ₱{self.netamount}"

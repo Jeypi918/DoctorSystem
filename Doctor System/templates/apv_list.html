@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Accounts Payable Vouchers</h1>
+  </div>
+
+  {% include 'partials/search_filter.html' %}
+
+  {% if apvouchers %}
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
+            <tr>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">AP Voucher No</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">AP Voucher Date</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">AP Category</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Supplier Type</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Payee Name</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Amount</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Discount Amt</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">EWT Rate</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">EWT Amt</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Net Amount</th>
+              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Balance</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Remarks/Notes</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Posted By</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for apv in apvouchers %}
+              <tr class="hover:bg-gray-50 transition-all duration-200">
+                <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ apv.ap_voucher_no|default:"—" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ apv.ap_voucher_date|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.ap_category }}">{{ apv.ap_category|default:"—" |truncatechars:30 }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.supplier_type }}">{{ apv.supplier_type|default:"—" |truncatechars:30 }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.payee_name }}">{{ apv.payee_name|default:"—" |truncatechars:40 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ apv.amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₱ {{ apv.discount_amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ apv.ewt_rate|floatformat:2 }}%</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₱ {{ apv.ewt_amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-right">₱ {{ apv.net_amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ apv.balance|floatformat:2 }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.remarks_notes }}">{{ apv.remarks_notes|default:"—" |truncatechars:50 }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.posted_by }}">{{ apv.posted_by|default:"—" |truncatechars:30 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-8 w-full px-4">
+        <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
+          <nav class="flex space-x-1 min-w-max">
+          {% if page_obj.has_previous %}
+            <a href="?{{ query_params }}&page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">First</a>
+          {% endif %}
+            {% with page_range=page_obj.paginator.page_range current=page_obj.number total=page_obj.paginator.num_pages %}
+            <a href="?{{ query_params }}&page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">1</a>
+              {% if current > 4 %}
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% for num in page_range %}
+                {% if num >= current|add:"-2" and num <= current|add:"2" %}
+                  {% if num == current %}
+                    <span class="px-4 py-2 bg-navy-500 text-white rounded-lg font-bold shadow">{{ num }}</span>
+                  {% else %}
+            <a href="?{{ query_params }}&amp;page={{ num }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors">{{ num }}</a>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {% if current < total|add:"-3" %}
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% if total > 1 %}
+            <a href="?{{ query_params }}&page={{ total }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">{{ total }}</a>
+              {% endif %}
+            {% endwith %}
+          {% if page_obj.has_next %}
+            <a href="?{{ query_params }}&page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Last</a>
+          {% endif %}
+          </nav>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-2xl shadow-lg">
+      <i class="fas fa-file-invoice-dollar text-6xl text-gray-300 mb-4"></i>
+      <p class="text-xl text-gray-500 mb-4">No accounts payable vouchers found.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

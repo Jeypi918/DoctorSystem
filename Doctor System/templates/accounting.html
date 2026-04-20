@@ -2,6 +2,11 @@
 {% block content %}
 <div class="page-header">
   <h1>Accounting Dashboard</h1>
+  <div class="page-actions">
+    <a href="{% url 'transactions' %}" class="btn-primary">Transactions</a>
+    <a href="{% url 'apv_vouchers' %}" class="btn-secondary">APV Vouchers</a>
+    <a href="{% url 'check_report' %}" class="btn-secondary">Check Report</a>
+  </div>
 </div>
 
 <div class="stats-grid">
@@ -20,6 +25,24 @@
   <div class="stat-card">
     <h3>Patients</h3>
     <p class="stat-number">{{ patient_count }}</p>
+  </div>
+  
+  <div class="stat-card">
+    <h3>Check Reports</h3>
+    <p class="stat-number">{{ check_report_count|default:"0" }}</p>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <a href="{% url 'check_report' %}" class="card-link-full">
+      <div class="card-icon"><i class="fas fa-file-alt"></i></div>
+      <div class="card-content">
+        <h3>Check Report</h3>
+        <p class="card-value">{{ check_report_count|default:"0" }}</p>
+        <span class="card-label">View All Reports</span>
+      </div>
+    </a>
   </div>
 </div>
 {% endblock %}

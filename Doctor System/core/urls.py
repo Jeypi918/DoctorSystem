@@ -52,4 +52,11 @@ urlpatterns = [
 
     # ===== OUTSTANDING REPORT =====
     path('outstanding-report/', views.OutstandingReportListView.as_view(), name='outstanding_report'),
+
+    # ===== APV VOUCHERS =====
+    path('apv-vouchers/', views.APVListView.as_view(), name='apv_vouchers'),
+    
+    # ===== CHECK REPORT =====
+    path('check-report/', views.CheckReportListView.as_view(), name='check_report'),
 ]
+
