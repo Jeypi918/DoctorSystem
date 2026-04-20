@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.db.models import Q
 from django.db import IntegrityError, connection
-from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck
+from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable
 from .forms import SignUpForm, EmdDoctorForm, PatientForm, PFTransactionForm, StatementOfAccountForm
 from .decorators import admin_required, doctor_required, billing_required, accounting_required
 
@@ -222,6 +222,8 @@ class TransactionListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['released_count'] = ReleasedCheck.objects.count()
+        context['unreleased_count'] = UnreleasedCheck.objects.count()
+        context['outstanding_count'] = OutstandingPayable.objects.count()
         return context
 
 class ReleasedCheckListView(ListView):
@@ -247,6 +249,70 @@ class ReleasedCheckListView(ListView):
             queryset = queryset.filter(releasedate__gte=date_from)
         if date_to:
             queryset = queryset.filter(releasedate__lte=date_to)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query_params'] = self.request.GET.urlencode()
+        return context
+
+class UnreleasedCheckListView(ListView):
+    model = UnreleasedCheck
+    template_name = 'unreleased_checks_list.html'
+    context_object_name = 'unreleased_checks'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if q:
+            queryset = queryset.filter(
+                Q(payeename__icontains=q) |
+                Q(checkno__icontains=q) |
+                Q(monthvalue__icontains=q)
+            )
+        if date_from:
+            queryset = queryset.filter(checkdate__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(checkdate__lte=date_to)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query_params'] = self.request.GET.urlencode()
+        return context
+
+
+class OutstandingReportListView(ListView):
+    model = OutstandingPayable
+    template_name = 'outstanding_report.html'
+    context_object_name = 'outstanding_payables'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if q:
+            queryset = queryset.filter(
+                Q(docno__icontains=q) |
+                Q(Vendor__icontains=q) |
+                Q(doctype__icontains=q) |
+                Q(documentstatus__icontains=q) |
+                Q(remarks__icontains=q) |
+                Q(PFRFtype__icontains=q)
+            )
+        if date_from:
+            queryset = queryset.filter(duedate__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(duedate__lte=date_to)
 
         return queryset
 
@@ -354,4 +420,3 @@ def accounting_view(request):
         'doctor_count': doctor_count,
         'patient_count': patient_count,
     })
-

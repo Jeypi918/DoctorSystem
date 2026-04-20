@@ -38,6 +38,9 @@ urlpatterns = [
     # ===== RELEASED CHECKS =====
     path('released-checks/', views.ReleasedCheckListView.as_view(), name='released_checks'),
 
+    # ===== UNRELEASED CHECKS =====
+    path('unreleased-checks/', views.UnreleasedCheckListView.as_view(), name='unreleased_checks'),
+
     # ===== DOCTOR SELF =====
     path('my-doctor/', views.my_doctor_view, name='my_doctor'),
 
@@ -46,5 +49,7 @@ urlpatterns = [
 
     # ===== ACCOUNTING =====
     path('accounting/', views.accounting_view, name='accounting'),
-]
 
+    # ===== OUTSTANDING REPORT =====
+    path('outstanding-report/', views.OutstandingReportListView.as_view(), name='outstanding_report'),
+]

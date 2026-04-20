@@ -14,12 +14,13 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
             <tr>
-              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Name</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Code</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Specialization</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">PHIC No</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Active</th>
-              <th class="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Name</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Code</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Category</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Specialization</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">PHIC No</th>
+              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Active</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -31,16 +32,17 @@
                     <span class="ml-2 text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full font-medium">(MD)</span>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.pk_emddoctors }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate" title="{{ doctor.specialization|default:'N/A' }}">{{ doctor.specialization|default:"N/A"|truncatechars:50 }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.phicno|default:"N/A"|truncatechars:20 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.pk_emddoctors }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ doctor.category|default:"N/A" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate" title="{{ doctor.specialization|default:'N/A' }}">{{ doctor.specialization|default:"N/A"|truncatechars:50 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ doctor.phicno|default:"N/A"|truncatechars:20 }}</td>
 
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <td class="px-4 py-4 whitespace-nowrap text-sm">
                   <span class="px-3 py-1 rounded-full text-xs font-medium {{ doctor.active|yesno:"bg-green-100 text-green-800, bg-red-100 text-red-800" }}">
                     {{ doctor.is_active_consultant|default:"No" }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <a href="{% url 'doctor_detail' doctor.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
                     <i class="fas fa-eye mr-1"></i> View
                   </a>
