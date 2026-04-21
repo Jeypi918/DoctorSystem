@@ -77,6 +77,10 @@ class DoctorListView(ListView):
     template_name = 'doctors_list.html'
     context_object_name = 'doctors'
     paginate_by = 25
+    
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -86,7 +90,6 @@ class DoctorListView(ListView):
         return context
 
 @login_required(login_url='login')
-@staff_required
 def doctor_detail_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
     transactions = PFTransaction.objects.filter(doctor=doctor)
