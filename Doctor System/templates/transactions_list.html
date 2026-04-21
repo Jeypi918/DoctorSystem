@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load number_filters %}
 {% block content %}
 <div class="page-header">
   <h1>PF Transactions</h1>
@@ -8,31 +9,31 @@
 <div class="cards mb-8">
   <div class="card card-doctors">
     <div class="card-title">Released Checks</div>
-    <div class="card-value">{{ released_count|default:"0" }}</div>
+    <div class="card-value">{{ released_count|abbreviate_number:"0" }}</div>
     <a href="{% url 'released_checks' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-patients">
     <div class="card-title">Unreleased Checks</div>
-    <div class="card-value">{{ unreleased_count|default:"0" }}</div>
+    <div class="card-value">{{ unreleased_count|abbreviate_number:"0" }}</div>
     <a href="{% url 'unreleased_checks' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
     <div class="card card-transactions">
     <div class="card-title">Outstanding Report</div>
-    <div class="card-value">{{ outstanding_count|default:"0" }}</div>
+    <div class="card-value">{{ outstanding_count|abbreviate_number:"0" }}</div>
     <a href="{% url 'outstanding_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-statements">
     <div class="card-title">Accounts Payable Vouchers</div>
-    <div class="card-value">{{ apv_count|default:"0" }}</div>
+    <div class="card-value">{{ apv_count|abbreviate_number:"0" }}</div>
     <a href="{% url 'apv_vouchers' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-doctors">
     <div class="card-title">Check Report</div>
-    <div class="card-value">{{ check_report_count|default:"0" }}</div>
+    <div class="card-value">{{ check_report_count|abbreviate_number:"0" }}</div>
     <a href="{% url 'check_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 </div>
