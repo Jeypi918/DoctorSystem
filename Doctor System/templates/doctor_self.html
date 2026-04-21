@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+{% load static %}
+<script src="{% static 'js/doctor_profile.js' %}"></script>
 <div class="page-header flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 pb-6 border-b-2 border-gray-200">
   <div>
     <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">My Doctor Profile</h1>
@@ -11,31 +13,114 @@
 {% if error %}
   <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8">
     <p class="text-red-800 font-semibold">{{ error }}</p>
+    {% if debug_username %}
+      <p class="text-red-600 mt-2">Debug: username = {{ debug_username }}</p>
+    {% endif %}
   </div>
 {% else %}
-  <!-- Profile Hero Card -->
+  <!-- Profile Hero Card - Compact EXACT Layout -->
   <div class="card card-doctors mb-8">
-    <div class="flex flex-col md:flex-row md:items-center md:gap-8 p-8">
-      <div class="profile-avatar w-32 h-32 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6 md:mb-0">
-        <i class="fa fa-user-md text-4xl text-white/90"></i>
+    <div class="flex gap-6 items-start p-6">
+      <!-- Avatar -->
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+        <i class="fa fa-user-md text-2xl text-white"></i>
       </div>
-      <div class="flex-1 text-white">
-        <h2 class="text-4xl md:text-5xl font-black mb-2 leading-tight">
-          Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+
+      <!-- Info -->
+      <div class="flex-1 space-y-3">
+
+        <!-- Name -->
+        <h2 class="text-3xl lg:text-4xl font-black text-white leading-tight">
+          Dr. {{ doctor.full_name }}
         </h2>
-        <div class="specialty-badge inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30 mb-4">
-          <i class="fa fa-stethoscope text-lg"></i>
-          <span class="font-semibold text-lg">{{ doctor.specialty }}</span>
+
+        <!-- Badges row -->
+        <div class="flex flex-wrap items-center gap-3 text-sm font-semibold">
+          <span class="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-800 flex items-center gap-1">
+            <i class="fa fa-stethoscope"></i> {{ doctor.specialization }}
+          </span>
+
+          <span class="px-3 py-1 rounded-xl bg-white/20 text-white">
+            MD ID: {{ doctor.pk_emddoctors }}
+          </span>
+
+          <span class="px-3 py-1 rounded-xl bg-green-500/20 text-green-100">
+            {{ doctor.is_active_consultant|yesno:"Active,Inactive" }}
+          </span>
         </div>
-        <p class="text-xl opacity-90 mb-4 flex items-center gap-2">
-          <i class="fa fa-envelope text-lg"></i>
-          <a href="mailto:{{ doctor.email }}" class="hover:text-white/70 transition-colors">{{ doctor.email }}</a>
-        </p>
+
+        <!-- PRC + PHIC (compact row) -->
+        <div class="text-sm text-white/90 flex flex-col md:flex-row md:gap-6">
+          <div>
+            <strong>PRC:</strong> {{ doctor.prcno }}
+            <span class="opacity-80">
+              · exp date {{ doctor.prcexpdate|date:"M d, Y"|default:"—" }}
+            </span>
+          </div>
+
+          <div>
+            <strong>PHIC:</strong> {{ doctor.phicno|default:"—" }}
+            <span class="opacity-80">
+              · exp date {{ doctor.phicexpdate|date:"M d, Y"|default:"—" }}
+            </span>
+          </div>
+        </div>
+
+        <!-- More details button - Simple click toggle -->
+        <div>
+          <button id="more-details-btn" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition font-semibold text-white">
+            <i class="fa fa-eye"></i>
+            More details
+          </button>
+          
+          <!-- Additional doctor info -->
+          <div id="more-details-info" class="mt-4 p-5 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30 hidden transition-all duration-300 text-xs">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-white/90">
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-building text-orange-400 text-lg"></i>
+                <span class="font-semibold">TIN:</span> {{ doctor.tin|default:"N/A" }}
+              </div>
+
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-envelope text-blue-400 text-lg"></i>
+                <span class="font-semibold">Email:</span> {{ doctor.email|default:"N/A" }}
+              </div>
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-phone text-green-400 text-lg"></i>
+                <span class="font-semibold">Mobile:</span> {{ doctor.smsplusmobileno|default:"N/A" }}
+              </div>
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-percentage text-yellow-400 text-lg"></i>
+                <span class="font-semibold">EWT:</span> {{ doctor.ewtrate_pct }}
+              </div>
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-university text-indigo-400 text-lg"></i>
+                <span class="font-semibold">Bank Name:</span> {{ doctor.bankacctname|default:"N/A"  }} 
+              </div>
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-university text-indigo-400 text-lg"></i>
+                <span class="font-semibold">Bank Account No:</span> {{ doctor.bankacctno|default:"N/A" }}
+              </div>
+              <!-- <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10">
+                <i class="fa fa-certificate text-purple-400 text-lg"></i>
+                <span class="font-semibold">S2:</span> {{ doctor.s2no }} exp {{ doctor.s2expirydate|date:"M Y"|default:"N/A" }}
+              </div> -->
+              <div class="flex items-center gap-2 p-3 rounded-xl hover:bg-white/10 md:col-span-2">
+                <i class="fa fa-layer-group text-teal-400 text-lg"></i>
+                <span class="font-semibold">Category:</span> {{ doctor.category|default:"N/A" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <!-- Quick Stats Row -->
+  </div>
+
+
+  <!-- Quick Stats & Sections Below -->
   <div class="cards grid-cols-1 md:grid-cols-3 gap-6 mb-12">
     <div class="card card-patients">
       <div class="card-title">Patients</div>
@@ -54,18 +139,19 @@
     </div>
   </div>
 
+  <!-- Other sections (Transactions, Patients, SOA) remain the same -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- Transactions Section -->
-    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
+    <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <i class="fa fa-file-invoice text-navy-500"></i>
+        <i class="fa fa-file-invoice text-blue-500"></i>
         Recent PF Transactions
       </h3>
       {% if transactions %}
         <div class="table-responsive">
           <table class="data-table w-full">
             <thead>
-              <tr class="bg-gray-50/50">
+              <tr class="bg-gray-50">
                 <th>Date</th>
                 <th>Patient</th>
                 <th>Amount</th>
@@ -74,10 +160,10 @@
             </thead>
             <tbody>
               {% for t in transactions|slice:":10" %}
-                <tr class="hover:bg-gray-50/50 transition-colors">
+                <tr class="hover:bg-gray-50 transition-colors">
                   <td class="font-medium">{{ t.date }}</td>
                   <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
-                  <td class="font-bold text-navy-600">₱ {{ t.amount }}</td>
+                  <td class="font-bold text-green-600">₱ {{ t.amount }}</td>
                   <td>{{ t.reference|default:"—" }}</td>
                 </tr>
               {% endfor %}
@@ -93,7 +179,7 @@
     </div>
 
     <!-- Patients Section -->
-    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl">
+    <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <i class="fa fa-users text-blue-500"></i>
         Connected Patients
@@ -101,9 +187,9 @@
       {% if patients %}
         <div class="space-y-3 max-h-96 overflow-y-auto">
           {% for p in patients|slice:":12" %}
-            <div class="flex items-center gap-4 p-4 bg-white/20 rounded-2xl hover:bg-white/30 transition-all">
-              <div class="w-12 h-12 bg-navy-100 rounded-2xl flex items-center justify-center">
-                <i class="fa fa-user text-navy-600 text-lg"></i>
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all">
+              <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                <i class="fa fa-user text-blue-600 text-lg"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-gray-900 truncate">{{ p.first_name }} {{ p.last_name }}</p>
@@ -121,18 +207,18 @@
     </div>
   </div>
 
-  <!-- Statements Section (Full Width) -->
+  <!-- SOA Section -->
   {% if soa_list %}
   <div class="mt-12">
     <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-      <i class="fa fa-folder text-amber-500"></i>
+      <i class="fa fa-file-alt text-orange-500"></i>
       Statements of Account
     </h3>
-    <div class="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-2xl overflow-hidden">
+    <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl overflow-hidden">
       <div class="table-responsive">
         <table class="data-table w-full">
           <thead>
-            <tr class="bg-gray-50/50">
+            <tr class="bg-gray-50">
               <th>Period</th>
               <th>Total</th>
               <th>Created</th>
@@ -140,9 +226,9 @@
           </thead>
           <tbody>
             {% for s in soa_list %}
-              <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100/50">
+              <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
                 <td class="font-medium">{{ s.start_date }} - {{ s.end_date }}</td>
-                <td class="font-bold text-2xl text-navy-600">₱ {{ s.filtered_total }}</td>
+                <td class="font-bold text-2xl text-green-600">₱ {{ s.filtered_total }}</td>
                 <td>{{ s.created_at|date:'M d, Y' }}</td>
               </tr>
             {% endfor %}
@@ -153,4 +239,99 @@
   </div>
   {% endif %}
 {% endif %}
+
+<!-- More Details Modal (Hidden, clickable) -->
+<div id="detailsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-6">
+  <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="sticky top-0 bg-white rounded-t-3xl p-8 border-b border-gray-200 z-10">
+      <div class="flex items-center justify-between">
+        <h3 class="text-3xl font-bold text-gray-900">Doctor Details</h3>
+        <button onclick="closeModal()" class="text-2xl text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-8 space-y-8">
+      <!-- TIN, Mobile, Bank, EWT Rate, etc. -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Tax Information</div>
+          <div class="space-y-3 text-lg">
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-building text-blue-500"></i>
+              <span>TIN: {{ doctor.tin }}</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-percentage text-orange-500"></i>
+              <span>EWT Rate: {{ doctor.ewtrate_pct }}</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-exchange-alt text-purple-500"></i>
+              <span>VAT Condition: {{ doctor.vatcondition }}</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact & Bank</div>
+          <div class="space-y-3 text-lg">
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-phone text-green-500"></i>
+              <span>Mobile: {{ doctor.smsplusmobileno }}</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-university text-indigo-500"></i>
+              <span>Bank: {{ doctor.bankacctname }} ({{ doctor.bankacctno }})</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+              <i class="fa fa-certificate text-yellow-500"></i>
+              <span>S2: {{ doctor.s2no }} (exp {{ doctor.s2expirydate|date:"M Y"|default:"—" }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Type & Category -->
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100">
+        <div class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Services</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <div class="text-xl font-bold text-gray-900">{{ doctor.category }}</div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+            <div class="text-lg text-gray-700 whitespace-pre-line">{{ doctor.service_type }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center pt-8 pb-6 border-t border-gray-200">
+        <button onclick="closeModal()" class="btn btn-primary px-12 py-3 text-lg font-bold shadow-lg">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // More details toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('more-details-btn');
+    const content = document.getElementById('more-details-info');
+    if (btn && content) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        content.classList.toggle('hidden');
+        // Toggle button text/icon
+        if (content.classList.contains('hidden')) {
+          btn.innerHTML = '<i class="fa fa-eye mr-1"></i> More details';
+        } else {
+          btn.innerHTML = '<i class="fa fa-eye-slash mr-1"></i> Less details';
+        }
+      });
+    }
+  });
+</script>
+
 {% endblock %}
