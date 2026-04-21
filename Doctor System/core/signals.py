@@ -20,7 +20,7 @@ def create_doctor_profile(sender, instance, created, **kwargs):
             profile = instance.userprofile
             if profile.role == 'doctor':
                 EmdDoctor.objects.get_or_create(
-                    user=instance,
+                    doctorsid=instance.id,
                     defaults={
                         'doctors_name': f"{instance.last_name}, {instance.first_name}",
                         'specialization': 'General',

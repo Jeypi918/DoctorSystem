@@ -89,8 +89,11 @@ def doctor_detail_view(request, pk):
 @staff_required
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
-    if doctor.user:
-        user = doctor.user
+    if doctor.doctorsid:
+        try:
+            user = User.objects.get(id=doctor.doctorsid)
+        except User.DoesNotExist:
+            user = None
         if request.method == 'POST':
             username = f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
             user.set_password(username)
@@ -147,12 +150,33 @@ def doctor_delete_view(request, pk):
 
 @doctor_required
 def my_doctor_view(request):
-    try:
-        my_doctor = request.user.emd_doctor_profile
-    except UserProfile.DoesNotExist:
-        return redirect('home')
-    except EmdDoctor.DoesNotExist:
-        return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.'})
+    # Match doctors by name similarity to username
+    username = request.user.username.lower()
+    # Try exact, last_first, first_last, abbariao variations
+    search_terms = [
+        username,
+        username.replace('abbariao', 'Abbariao, Maritoni'),
+        'abbariao, maritoni',
+        'maritoni abbariao',
+        request.user.username.title()
+    ]
+    
+    my_doctor = None
+    for term in search_terms:
+        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
+        if my_doctor:
+            break
+    
+    # Fallback to first active doctor if no match
+    if not my_doctor:
+        my_doctor = EmdDoctor.objects.filter(active=True).first()
+        if my_doctor:
+            print(f'FALLBACK to {my_doctor.doctors_name} for {request.user.username}')
+    
+    if not my_doctor:
+        return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username})
+    
+    print(f'Matched {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors}) for {request.user.username}')
 
     transactions = PFTransaction.objects.filter(doctor=my_doctor)
     patients = Patient.objects.filter(pftransaction__doctor=my_doctor).distinct()

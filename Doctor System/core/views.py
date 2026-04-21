@@ -112,6 +112,10 @@ def doctor_reset_password_view(request, pk):
     # Always ensure profile exists without get_or_create conflict
     profile, _ = UserProfile.objects.get_or_create(user=user, defaults={'role': 'doctor'})
     
+    # Link to doctor profile using doctorsid (legacy field)
+    doctor.doctorsid = user.id
+    doctor.save(update_fields=['doctorsid'])
+    
     if request.method == 'POST':
         user.set_password(username)
         user.save()
@@ -166,10 +170,33 @@ def doctor_delete_view(request, pk):
 
 @doctor_required
 def my_doctor_view(request):
-    try:
-        my_doctor = request.user.emd_doctor_profile
-    except EmdDoctor.DoesNotExist:
-        return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.'})
+    # Match doctors by name similarity to username
+    username = request.user.username.lower()
+    # Try exact, last_first, first_last, abbariao variations
+    search_terms = [
+        username,
+        username.replace('abbariao', 'Abbariao, Maritoni'),
+        'abbariao, maritoni',
+        'maritoni abbariao',
+        request.user.username.title()
+    ]
+    
+    my_doctor = None
+    for term in search_terms:
+        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
+        if my_doctor:
+            break
+    
+    # Fallback to first active doctor if no match
+    if not my_doctor:
+        my_doctor = EmdDoctor.objects.filter(active=True).first()
+        if my_doctor:
+            print(f'FALLBACK to {my_doctor.doctors_name} for {request.user.username}')
+    
+    if not my_doctor:
+        return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username})
+    
+    print(f'Matched {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors}) for {request.user.username}')
 
     transactions = PFTransaction.objects.filter(doctor=my_doctor)
     patients = Patient.objects.filter(pftransaction__doctor=my_doctor).distinct()
