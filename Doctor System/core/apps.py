@@ -7,4 +7,3 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         import core.signals
-        import core.templatetags.number_filters

@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load number_filters %}
 {% block content %}
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
   <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Welcome {{ request.user.username }}!</h1>
@@ -8,7 +7,7 @@
 <div class="cards">
   <div class="card card-doctors">
     <div class="card-title">Doctors</div>
-    <div class="card-value">{{ doctor_count|abbreviate_number }}</div>
+    <div class="card-value">{{ doctor_count }}</div>
     <a href="{% url 'doctors' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
@@ -20,7 +19,7 @@
 
   <div class="card card-transactions">
     <div class="card-title">Transactions</div>
-<div class="card-value">{{ transaction_count|abbreviate_number }}</div>
+    <div class="card-value">{{ transaction_count }}</div>
     <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
