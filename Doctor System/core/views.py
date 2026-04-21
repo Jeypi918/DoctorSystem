@@ -99,21 +99,30 @@ def doctor_detail_view(request, pk):
 @staff_required
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
-    if doctor.user:
-        user = doctor.user
-        if request.method == 'POST':
-            username = f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
-            user.set_password(username)
-            user.save()
-            messages.success(request, f'Password reset for {doctor}! New password: {username}')
-            return redirect('doctor_detail', pk=pk)
-        return render(request, 'confirm_reset.html', {
-            'doctor': doctor,
-            'new_password': f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
-        })
-    else:
-        messages.error(request, 'No user account linked to this doctor.')
-        return redirect('doctors')
+    
+    # Generate consistent username/password from doctor name
+    username = f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
+    
+    # Safe user handling - get_or_create User, ensure UserProfile exists
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        user = User.objects.create_user(username=username, password='temp123!')
+    
+    # Always ensure profile exists without get_or_create conflict
+    profile, _ = UserProfile.objects.get_or_create(user=user, defaults={'role': 'doctor'})
+    
+    if request.method == 'POST':
+        user.set_password(username)
+        user.save()
+        messages.success(request, f'Password reset for {doctor}! Username/Password: {username}')
+        return redirect('doctor_detail', pk=pk)
+    
+    return render(request, 'confirm_reset.html', {
+        'doctor': doctor,
+        'new_password': username,
+        'username': username
+    })
 
 @login_required(login_url='login')
 @staff_required
