@@ -14,9 +14,28 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'role', 'specialty')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].validators = []
+        self.fields['password2'].validators = []
+
+    def clean_password1(self):
+        return self.cleaned_data.get('password1')
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError(self.error_messages['password_mismatch'])
+        return password2
+
     def save(self, commit=True):
-        user = super().save(commit=False)
+        user = self.instance if self.instance else self.Meta.model(**self.cleaned_data)
+        user.username = self.cleaned_data['username']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
         user.email = self.cleaned_data['email']
+        user.set_password(self.cleaned_data['password1'])  # Manual hash, no validation
         user.is_staff = True
         if self.cleaned_data['role'] == 'admin':
             user.is_superuser = True

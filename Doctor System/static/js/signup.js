@@ -16,13 +16,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastName = lastNameInput.value.trim();
 
         if (firstName && lastName) {
-            // Generate username: First letter upper + rest lower for first, + First letter upper + rest lower for last
-            // e.g., "JP" -> "Jp", "Cureg" -> "Cureg" → "JpCureg"
-            const formattedFirst = firstName.charAt(0).toUpperCase()+firstName.slice(1).toLowerCase();
-            const formattedLast = lastName.charAt(0).toLowerCase()+lastName.slice(1).toLowerCase();
-            usernameInput.value = formattedFirst+formattedLast;
+            // Split words, lowercase all, join without spaces
+            const firstWords = firstName.toLowerCase().replace(/\\s+/g, ' ').trim().split(' ').filter(Boolean).join('');
+            const lastWords = lastName.toLowerCase().replace(/\\s+/g, ' ').trim().split(' ').filter(Boolean).join('');
+            const newUsername = firstWords + lastWords;
+            usernameInput.value = newUsername;
+            
+            // Set password fields to match username
+            const password1 = document.getElementById('id_password1');
+            const password2 = document.getElementById('id_password2');
+            if (password1) password1.value = newUsername;
+            if (password2) password2.value = newUsername;
         } else {
             usernameInput.value = '';
+            const password1 = document.getElementById('id_password1');
+            const password2 = document.getElementById('id_password2');
+            if (password1) password1.value = '';
+            if (password2) password2.value = '';
         }
     }
 
@@ -53,4 +63,3 @@ document.addEventListener('DOMContentLoaded', function() {
     updateUsername();
     updateSpecialtyVisibility();
 });
-

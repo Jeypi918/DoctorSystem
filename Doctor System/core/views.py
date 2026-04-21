@@ -27,8 +27,8 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             UserProfile.objects.update_or_create(user=user, defaults={'role': form.cleaned_data['role']})
-            login(request, user)
-            return redirect('home')
+            # login(request, user)
+            return redirect('login')
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
