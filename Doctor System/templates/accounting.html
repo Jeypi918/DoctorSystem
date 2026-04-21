@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load number_filters %}
 {% block content %}
 <div class="page-header">
   <h1>Accounting Dashboard</h1>
@@ -29,7 +30,15 @@
   
   <div class="stat-card">
     <h3>Check Reports</h3>
-    <p class="stat-number">{{ check_report_count|default:"0" }}</p>
+    <p class="stat-number">{{ check_report_count|abbreviate_number:"0" }}</p>
+</xai:function_call">
+
+<xai:function_call name="edit_file">
+<parameter name="path">c:/xampp/htdocs/DoctorSystem/Doctor System/templates/accounting.html
+</xai:function_call]
+
+<xai:function_call name="edit_file">
+<parameter name="path">c:/xampp/htdocs/DoctorSystem/Doctor System/templates/accounting.html
   </div>
 </div>
 
@@ -39,7 +48,15 @@
       <div class="card-icon"><i class="fas fa-file-alt"></i></div>
       <div class="card-content">
         <h3>Check Report</h3>
-        <p class="card-value">{{ check_report_count|default:"0" }}</p>
+        <p class="card-value">{{ check_report_count|abbreviate_number:"0" }}</p>
+</xai:function_call">
+
+<xai:function_call name="edit_file">
+<parameter name="path">c:/xampp/htdocs/DoctorSystem/TODO_abbreviate_numbers.md
+</xai:function_call">
+
+<xai:function_call name="edit_file">
+<parameter name="path">c:/xampp/htdocs/DoctorSystem/TODO_abbreviate_numbers.md
         <span class="card-label">View All Reports</span>
       </div>
     </a>
