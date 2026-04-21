@@ -6,7 +6,7 @@ from .models import UserProfile, EmdDoctor
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.get_or_create(user=instance)
+        UserProfile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
@@ -20,6 +20,7 @@ def create_doctor_profile(sender, instance, created, **kwargs):
             profile = instance.userprofile
             if profile.role == 'doctor':
                 EmdDoctor.objects.get_or_create(
+                    user=instance,
                     defaults={
                         'doctors_name': f"{instance.last_name}, {instance.first_name}",
                         'specialization': 'General',
