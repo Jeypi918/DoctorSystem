@@ -19,7 +19,8 @@ def admin_required(view_func):
 
 def doctor_required(view_func):
     def check_role(user):
-        return get_user_role(user) == 'doctor'
+        role = get_user_role(user)
+        return role == 'doctor' or role == 'admin'
     return user_passes_test(check_role, login_url='login')(login_required(view_func))
 
 

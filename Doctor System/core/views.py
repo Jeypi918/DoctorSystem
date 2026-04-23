@@ -258,11 +258,36 @@ def my_doctor_view(request):
     patients = Patient.objects.filter(pftransaction__doctor=my_doctor).distinct()
     soa_list = StatementOfAccount.objects.filter(doctor=my_doctor).order_by('-start_date')
 
+    print(f"DEBUG: transactions.count() = {transactions.count()}")
+    print(f"DEBUG: First 3 transactions doctors: {list(transactions.values('doctor')[:3])}")
+    print(f"DEBUG: my_doctor = {my_doctor.doctors_name}")
+
+    patient_count = patients.count()
+    transaction_count = transactions.count()
+
+    # Match home_view PF total logic for consistency
+    released_count = ReleasedCheck.objects.filter(
+        Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+    ).count()
+    unreleased_count = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name).count()
+    outstanding_count = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
+    apv_count = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
+    check_report_count = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
+    pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
+    transaction_count = pf_total
+
+    statement_count = soa_list.count()
+
+    print(f"DEBUG: patient_count={patient_count}, transaction_count(PF total)={transaction_count}, statement_count={statement_count}")
+
     return render(request, 'doctor_self.html', {
         'doctor': my_doctor,
         'transactions': transactions,
         'patients': patients,
         'soa_list': soa_list,
+        'patient_count': patient_count,
+        'transaction_count': transaction_count,
+        'statement_count': statement_count,
     })
 
 # ===== PATIENT VIEWS =====
@@ -271,6 +296,10 @@ class PatientListView(ListView):
     template_name = 'patients_list.html'
     context_object_name = 'patients'
     paginate_by = 10
+
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
 @login_required(login_url='login')
 @staff_required
@@ -319,6 +348,10 @@ class TransactionListView(ListView):
     template_name = 'transactions_list.html'
     context_object_name = 'transactions'
     paginate_by = 10
+
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -587,6 +620,10 @@ class SoaListView(ListView):
     template_name = 'statement_list.html'
     context_object_name = 'statements'
     paginate_by = 10
+
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
 @login_required(login_url='login')
 @staff_required
