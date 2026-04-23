@@ -81,7 +81,7 @@ def get_current_doctor(request):
     return my_doctor
 
 
-@doctor_required
+@login_required(login_url='login')
 def home_view(request):
     my_doctor = get_current_doctor(request)
     
