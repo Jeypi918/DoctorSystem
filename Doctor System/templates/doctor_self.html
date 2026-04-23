@@ -54,14 +54,14 @@
           <div>
             <strong>PRC:</strong> {{ doctor.prcno }}
             <span class="opacity-80">
-              · exp date {{ doctor.prcexpdate|date:"M d, Y"|default:"—" }}
+              · Exp Date {{ doctor.prcexpdate|date:"M d, Y"|default:"—" }}
             </span>
           </div>
 
           <div>
             <strong>PHIC:</strong> {{ doctor.phicno|default:"—" }}
             <span class="opacity-80">
-              · exp date {{ doctor.phicexpdate|date:"M d, Y"|default:"—" }}
+              · Exp Date {{ doctor.phicexpdate|date:"M d, Y"|default:"—" }}
             </span>
           </div>
         </div>
@@ -121,7 +121,7 @@
 
 
   <!-- Quick Stats & Sections Below -->
-  <div class="cards grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+  <div class="cards grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 mb-8">
     <div class="card card-patients">
       <div class="card-title">Patients</div>
       <div class="card-value">{{ patients|length }}</div>
