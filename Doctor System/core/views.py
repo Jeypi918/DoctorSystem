@@ -53,14 +53,56 @@ def logout_view(request):
 
 # ===== DASHBOARD VIEW =====
 @login_required(login_url='login')
+def get_current_doctor(request):
+    """
+    Helper: Match username to EmdDoctor (reuse my_doctor_view logic)
+    """
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
+        return None
+    
+    username = request.user.username.lower()
+    search_terms = [
+        username,
+        username.replace('abbariao', 'Abbariao, Maritoni'),
+        'abbariao, maritoni',
+        'maritoni abbariao',
+        request.user.username.title()
+    ]
+    
+    my_doctor = None
+    for term in search_terms:
+        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
+        if my_doctor:
+            break
+    
+    if not my_doctor:
+        my_doctor = EmdDoctor.objects.filter(active=True).first()
+    
+    return my_doctor
+
+
+@doctor_required
 def home_view(request):
+    my_doctor = get_current_doctor(request)
+    
     doctor_count = EmdDoctor.objects.count()
     patient_count = Patient.objects.count()
-    released_count = ReleasedCheck.objects.count()
-    unreleased_count = UnreleasedCheck.objects.count()
-    outstanding_count = OutstandingPayable.objects.count()
-    apv_count = APV.objects.count()
-    check_report_count = CheckReport.objects.count()
+    
+    if my_doctor:
+        released_count = ReleasedCheck.objects.filter(
+            Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+        ).count()
+        unreleased_count = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name).count()
+        outstanding_count = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
+        apv_count = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
+        check_report_count = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
+    else:
+        released_count = ReleasedCheck.objects.count()
+        unreleased_count = UnreleasedCheck.objects.count()
+        outstanding_count = OutstandingPayable.objects.count()
+        apv_count = APV.objects.count()
+        check_report_count = CheckReport.objects.count()
+    
     pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
     transaction_count = pf_total
     statement_count = StatementOfAccount.objects.count()
@@ -280,11 +322,21 @@ class TransactionListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['released_count'] = ReleasedCheck.objects.count()
-        context['unreleased_count'] = UnreleasedCheck.objects.count()
-        context['outstanding_count'] = OutstandingPayable.objects.count()
-        context['apv_count'] = APV.objects.count()
-        context['check_report_count'] = CheckReport.objects.count()
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            context['released_count'] = ReleasedCheck.objects.filter(
+                Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+            ).count()
+            context['unreleased_count'] = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name).count()
+            context['outstanding_count'] = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
+            context['apv_count'] = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
+            context['check_report_count'] = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
+        else:
+            context['released_count'] = ReleasedCheck.objects.count()
+            context['unreleased_count'] = UnreleasedCheck.objects.count()
+            context['outstanding_count'] = OutstandingPayable.objects.count()
+            context['apv_count'] = APV.objects.count()
+            context['check_report_count'] = CheckReport.objects.count()
         return context
 
 class ReleasedCheckListView(ListView):
@@ -293,8 +345,20 @@ class ReleasedCheckListView(ListView):
     context_object_name = 'released_checks'
     paginate_by = 10
 
+    @method_decorator(doctor_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            queryset = queryset.filter(
+                Q(payee__icontains=my_doctor.doctors_name) | 
+                Q(vendorname__icontains=my_doctor.doctors_name)
+            )
+        
         q = self.request.GET.get('q', '').strip()
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -324,8 +388,17 @@ class UnreleasedCheckListView(ListView):
     context_object_name = 'unreleased_checks'
     paginate_by = 10
 
+    @method_decorator(doctor_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            queryset = queryset.filter(payeename__icontains=my_doctor.doctors_name)
+        
         q = self.request.GET.get('q', '').strip()
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -355,8 +428,17 @@ class OutstandingReportListView(ListView):
     context_object_name = 'outstanding_payables'
     paginate_by = 10
 
+    @method_decorator(doctor_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            queryset = queryset.filter(Vendor__icontains=my_doctor.doctors_name)
+        
         q = self.request.GET.get('q', '').strip()
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -388,8 +470,17 @@ class APVListView(ListView):
     context_object_name = 'apvouchers'
     paginate_by = 10
 
+    @method_decorator(doctor_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            queryset = queryset.filter(payee_name__icontains=my_doctor.doctors_name)
+        
         q = self.request.GET.get('q', '').strip()
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -421,8 +512,17 @@ class CheckReportListView(ListView):
     context_object_name = 'check_reports'
     paginate_by = 10
 
+    @method_decorator(doctor_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        my_doctor = get_current_doctor(self.request)
+        if my_doctor:
+            queryset = queryset.filter(payto__icontains=my_doctor.doctors_name)
+        
         q = self.request.GET.get('q', '').strip()
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')

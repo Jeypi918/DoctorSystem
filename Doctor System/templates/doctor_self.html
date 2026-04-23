@@ -128,9 +128,24 @@
       <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
     <div class="card card-transactions">
-      <div class="card-title">Transactions</div>
+      <div class="card-title">PF Transactions</div>
       <div class="card-value">{{ transactions|length }}</div>
       <a href="#" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="card card-pfchecks">
+      <div class="card-title">Released Checks</div>
+      <div class="card-value">{{ doctor.released_checks|length|default:"0" }}</div>
+      <a href="{% url 'released_checks' %}" class="card-link">View My Checks <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="card card-pfunreleased">
+      <div class="card-title">Unreleased Checks</div>
+      <div class="card-value">{{ doctor.unreleased_checks|length|default:"0" }}</div>
+      <a href="{% url 'unreleased_checks' %}" class="card-link">View My Checks <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="card card-pfoutstanding">
+      <div class="card-title">Outstanding</div>
+      <div class="card-value">{{ doctor.outstanding_payables|length|default:"0" }}</div>
+      <a href="{% url 'outstanding_report' %}" class="card-link">View My Outstanding <i class="fas fa-arrow-right"></i></a>
     </div>
     <div class="card card-statements">
       <div class="card-title">Statements</div>
