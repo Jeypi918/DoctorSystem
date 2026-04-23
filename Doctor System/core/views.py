@@ -82,8 +82,22 @@ class DoctorListView(ListView):
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            queryset = queryset.filter(
+                Q(pk_emddoctors__icontains=q) |
+                Q(doctors_name__icontains=q) |
+                Q(category__icontains=q) |
+                Q(specialization__icontains=q) |
+                Q(phicno__icontains=q)
+            )
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['query_params'] = self.request.GET.urlencode()
         paginator = context['paginator']
         page_number = context['page_obj'].number
         context['page_range'] = [1] + list(range(max(2, page_number - 2), min(paginator.num_pages + 1, page_number + 3))) + [paginator.num_pages] if paginator.num_pages > 5 else list(range(1, paginator.num_pages + 1))
