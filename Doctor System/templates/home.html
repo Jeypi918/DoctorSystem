@@ -6,11 +6,15 @@
 </div>
 
 <div class="cards">
-  <div class="card card-doctors">
+
+{% if request.user.userprofile.role != 'doctor' %}
+<div class="card card-doctors">
     <div class="card-title">Doctors</div>
     <div class="card-value">{{ doctor_count|abbrev }}</div>
     <a href="{% url 'doctors' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
+{% endif %}
+
 
   <div class="card card-patients">
     <div class="card-title">Patients</div>
