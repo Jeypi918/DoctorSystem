@@ -55,32 +55,29 @@ def logout_view(request):
 @login_required(login_url='login')
 def get_current_doctor(request):
     """
-    Improved: Prioritize doctorsid link, fallback to name search.
+    Helper: Match username to EmdDoctor (reuse my_doctor_view logic)
     """
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
         return None
-
-    # Priority 1: Exact doctorsid match (set during reset)
-    my_doctor = EmdDoctor.objects.filter(doctorsid=request.user.id).first()
-    if my_doctor:
-        print(f'get_current_doctor: doctorsid match {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors})')
-        return my_doctor
-
-    # Priority 2: Name search (cleaned, no hacks)
+    
     username = request.user.username.lower()
-    last_first = username.replace('abesamiswinstonpalapal', 'ABESAMIS, WINSTON PALAPAL')  # Specific fix
-    search_terms = [username, last_first, username.title()]
-
+    search_terms = [
+        username,
+        username.replace('abbariao', 'Abbariao, Maritoni'),
+        'abbariao, maritoni',
+        'maritoni abbariao',
+        request.user.username.title()
+    ]
+    
+    my_doctor = None
     for term in search_terms:
         my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
         if my_doctor:
-            print(f'get_current_doctor: name match {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors}) for {username}')
-            return my_doctor
-
-    # Fallback: first active
-    my_doctor = EmdDoctor.objects.filter(active=True).first()
-    if my_doctor:
-        print(f'get_current_doctor: FALLBACK to {my_doctor.doctors_name} for {username}')
+            break
+    
+    if not my_doctor:
+        my_doctor = EmdDoctor.objects.filter(active=True).first()
+    
     return my_doctor
 
 
@@ -229,7 +226,28 @@ def doctor_delete_view(request, pk):
 
 @doctor_required
 def my_doctor_view(request):
-    my_doctor = get_current_doctor(request)
+    # Match doctors by name similarity to username
+    username = request.user.username.lower()
+    # Try exact, last_first, first_last, abbariao variations
+    search_terms = [
+        username,
+        username.replace('abbariao', 'Abbariao, Maritoni'),
+        'abbariao, maritoni',
+        'maritoni abbariao',
+        request.user.username.title()
+    ]
+    
+    my_doctor = None
+    for term in search_terms:
+        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
+        if my_doctor:
+            break
+    
+    # Fallback to first active doctor if no match
+    if not my_doctor:
+        my_doctor = EmdDoctor.objects.filter(active=True).first()
+        if my_doctor:
+            print(f'FALLBACK to {my_doctor.doctors_name} for {request.user.username}')
     
     if not my_doctor:
         return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username})
