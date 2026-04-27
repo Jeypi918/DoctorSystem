@@ -25,6 +25,7 @@
     <a href="{% url 'outstanding_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
+  {% if user.userprofile.role != 'doctor' %}
   <div class="card card-statements">
     <div class="card-title">Accounts Payable Vouchers</div>
     <div class="card-value">{{ apv_count|default:"0"|abbrev }}</div>
@@ -36,6 +37,7 @@
     <div class="card-value">{{ check_report_count|default:"0"|abbrev }}</div>
     <a href="{% url 'check_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
+  {% endif %}
 </div>
 
 {% if transactions %}
