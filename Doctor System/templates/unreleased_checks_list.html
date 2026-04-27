@@ -13,22 +13,32 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
             <tr>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Payee Name</th>
+              {% endif %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Check No</th>
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Check Date</th>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Month Value</th>
+              {% endif %}
               <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Amount</th>
             </tr>
+
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             {% for uc in unreleased_checks %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ uc.payeename }}">{{ uc.payeename|default:"—" |truncatechars:40 }}</td>
+                {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ uc.checkno|default:"—" }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ uc.checkdate|date:"Y-m-d"|default:"—" }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ uc.monthvalue }}">{{ uc.monthvalue|default:"—" |truncatechars:40 }}</td>
+                {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ uc.amount|floatformat:2 }}</td>
               </tr>
+
             {% endfor %}
           </tbody>
         </table>

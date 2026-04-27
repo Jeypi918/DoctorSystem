@@ -103,9 +103,13 @@ def home_view(request):
         apv_count = APV.objects.count()
         check_report_count = CheckReport.objects.count()
     
-    pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
+    if my_doctor:
+        pf_total = released_count + unreleased_count + outstanding_count
+    else:
+        pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
     transaction_count = pf_total
     statement_count = StatementOfAccount.objects.count()
+
     return render(request, 'home.html', {
         'doctor_count': doctor_count,
         'patient_count': patient_count,
@@ -273,10 +277,10 @@ def my_doctor_view(request):
     outstanding_count = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
     apv_count = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
     check_report_count = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
-    pf_total = released_count + unreleased_count + outstanding_count + apv_count + check_report_count
+    pf_total = released_count + unreleased_count + outstanding_count
     transaction_count = pf_total
-
     statement_count = soa_list.count()
+
 
     print(f"DEBUG: patient_count={patient_count}, transaction_count(PF total)={transaction_count}, statement_count={statement_count}")
 

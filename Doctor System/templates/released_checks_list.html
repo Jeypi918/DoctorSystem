@@ -16,10 +16,15 @@
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Check No</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Check Date</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Release Date</th>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Payee</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Vendor</th>
+              {% endif %}
               <th class="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Amount</th>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Bank</th>
+              {% endif %}
+
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -28,11 +33,16 @@
                 <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ rc.checkno }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.checkdate|date:"Y-m-d"|default:"—" }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ rc.releasedate|date:"Y-m-d"|default:"—" }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.payee }}">{{ rc.payee|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.vendorname }}">{{ rc.vendorname|default:"—" |truncatechars:40 }}</td>
+                {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ rc.amount|floatformat:2 }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.bankname|default:"—" }}</td>
+                {% endif %}
               </tr>
+
             {% endfor %}
           </tbody>
         </table>

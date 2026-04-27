@@ -16,16 +16,23 @@
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Date</th>
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Due Date</th>
               <!-- <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Settlement Date</th> -->
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Type</th>
+              {% endif %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc No</th>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Vendor</th>
+              {% endif %}
               <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Amount</th>
               <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Payments Adjustments</th>
               <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Balance</th>
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Remarks</th>
+              {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">PFRF Type</th>
               <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Status</th>
+              {% endif %}
             </tr>
+
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             {% for op in outstanding_payables %}
@@ -33,16 +40,23 @@
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.docdate|date:"Y-m-d"|default:"—" }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.duedate|date:"Y-m-d"|default:"—" }}</td>
                 <!-- <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ op.settlementdate|date:"Y-m-d"|default:"—" }}</td> -->
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ op.doctype|default:"—" }}</td>
+                {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ op.docno }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.Vendor }}">{{ op.Vendor|default:"—" |truncatechars:40 }}</td>
+                {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ op.amount|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ op.paymentsadjustments|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">₱ {{ op.paymentsadjustments|floatformat:2 }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right font-semibold">₱ {{ op.balance|floatformat:2 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.remarks }}">{{ op.remarks|default:"—" |truncatechars:40 }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.PFRFtype }}">{{ op.PFRFtype|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.documentstatus|default:"—" }}</td>
+                {% endif %}
               </tr>
+
             {% endfor %}
           </tbody>
         </table>
