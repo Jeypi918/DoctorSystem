@@ -129,7 +129,7 @@ class DoctorListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('doctors_name')
         q = self.request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(
@@ -143,7 +143,9 @@ class DoctorListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         paginator = context['paginator']
         page_number = context['page_obj'].number
         context['page_range'] = [1] + list(range(max(2, page_number - 2), min(paginator.num_pages + 1, page_number + 3))) + [paginator.num_pages] if paginator.num_pages > 5 else list(range(1, paginator.num_pages + 1))
@@ -387,7 +389,7 @@ class ReleasedCheckListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-checkdate', 'checkno')
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -405,7 +407,16 @@ class ReleasedCheckListView(ListView):
                 Q(checkno__icontains=q) |
                 Q(payee__icontains=q) |
                 Q(vendorname__icontains=q) |
-                Q(bankname__icontains=q)
+                Q(bankname__icontains=q) |
+                Q(remarks__icontains=q) |
+                Q(admissiontype__icontains=q) |
+                Q(admissionno__icontains=q) |
+                Q(status__icontains=q) |
+                Q(patientname__icontains=q) |
+                Q(patientnameinitials__icontains=q) |
+                Q(remarkcategory__icontains=q) |
+                Q(remarkdetail__icontains=q)
+                
             )
         if date_from:
             queryset = queryset.filter(releasedate__gte=date_from)
@@ -416,8 +427,11 @@ class ReleasedCheckListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         return context
+
 
 class UnreleasedCheckListView(ListView):
     model = UnreleasedCheck
@@ -430,7 +444,7 @@ class UnreleasedCheckListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-checkdate', 'checkno')
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -444,7 +458,15 @@ class UnreleasedCheckListView(ListView):
             queryset = queryset.filter(
                 Q(payeename__icontains=q) |
                 Q(checkno__icontains=q) |
-                Q(monthvalue__icontains=q)
+                Q(monthvalue__icontains=q) |
+                Q(remarks__icontains=q) |
+                Q(admissiontype__icontains=q) |
+                Q(admissionno__icontains=q) |
+                Q(status__icontains=q) |
+                Q(patientname__icontains=q) |
+                Q(patientnameinitials__icontains=q) |
+                Q(remarkcategory__icontains=q) |
+                Q(remarkdetail__icontains=q)
             )
         if date_from:
             queryset = queryset.filter(checkdate__gte=date_from)
@@ -455,7 +477,9 @@ class UnreleasedCheckListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         return context
 
 
@@ -470,7 +494,7 @@ class OutstandingReportListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-duedate', 'docno')
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -498,7 +522,9 @@ class OutstandingReportListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         return context
 
 class APVListView(ListView):
@@ -512,7 +538,7 @@ class APVListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-ap_voucher_date', 'ap_voucher_no')
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -540,7 +566,9 @@ class APVListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         return context
 
 class CheckReportListView(ListView):
@@ -554,7 +582,7 @@ class CheckReportListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-voucherdate', 'voucherno')
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -581,7 +609,9 @@ class CheckReportListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_params'] = self.request.GET.urlencode()
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
         return context
 
 @login_required(login_url='login')
@@ -689,3 +719,4 @@ def accounting_view(request):
         'patient_count': patient_count,
         'check_report_count': check_report_count,
     })
+

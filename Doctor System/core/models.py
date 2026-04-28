@@ -130,6 +130,16 @@ class ReleasedCheck(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     bankname = models.CharField(max_length=100)
 
+    # New columns added to the releasedchecks table
+    remarks = models.CharField(max_length=255, blank=True, null=True, db_column='Remarks')
+    admissiontype = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionType')
+    admissionno = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionNo')
+    status = models.CharField(max_length=50, blank=True, null=True, db_column='Status')
+    patientname = models.CharField(max_length=255, blank=True, null=True, db_column='PatientName')
+    patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
+    remarkcategory = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkCategory')
+    remarkdetail = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkDetail')
+
     class Meta:
         managed = False
         db_table = 'releasedchecks'
@@ -144,6 +154,16 @@ class UnreleasedCheck(models.Model):
     monthvalue = models.CharField('Month Value', max_length=50)
     amount = models.DecimalField('Amount', max_digits=12, decimal_places=2)
     monthnumeric = models.CharField('Month Numeric', max_length=20)
+
+    # New columns added to the unissuedchecks table
+    remarks = models.CharField(max_length=255, blank=True, null=True, db_column='Remarks')
+    admissiontype = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionType')
+    admissionno = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionNo')
+    status = models.CharField(max_length=50, blank=True, null=True, db_column='Status')
+    patientname = models.CharField(max_length=255, blank=True, null=True, db_column='PatientName')
+    patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
+    remarkcategory = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkCategory')
+    remarkdetail = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkDetail')
 
     class Meta:
         managed = False

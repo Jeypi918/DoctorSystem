@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck
+from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -44,9 +44,33 @@ class StatementOfAccountAdmin(admin.ModelAdmin):
 
 @admin.register(ReleasedCheck)
 class ReleasedCheckAdmin(admin.ModelAdmin):
-    list_display = ('checkno', 'payee', 'amount', 'checkdate', 'releasedate', 'bankname')
-    list_filter = ('bankname', 'checkdate', 'releasedate')
-    search_fields = ('checkno', 'payee', 'vendorname')
-    list_filter = ('bankname', 'checkdate')
-    search_fields = ('checkno', 'payee', 'vendorname')
+    list_display = (
+        'checkno', 'payee', 'amount', 'checkdate', 'releasedate',
+        'bankname', 'remarks', 'admissiontype', 'admissionno',
+        'status', 'patientname', 'patientnameinitials',
+        'remarkcategory', 'remarkdetail'
+    )
+    list_filter = ('bankname', 'checkdate', 'releasedate', 'status', 'admissiontype', 'remarkcategory')
+    search_fields = (
+        'checkno', 'payee', 'vendorname', 'remarks',
+        'admissiontype', 'admissionno', 'status',
+        'patientname', 'patientnameinitials',
+        'remarkcategory', 'remarkdetail'
+    )
+
+@admin.register(UnreleasedCheck)
+class UnreleasedCheckAdmin(admin.ModelAdmin):
+    list_display = (
+        'checkno', 'payeename', 'amount', 'checkdate',
+        'remarks', 'admissiontype', 'admissionno',
+        'status', 'patientname', 'patientnameinitials',
+        'remarkcategory', 'remarkdetail'
+    )
+    list_filter = ('checkdate', 'status', 'admissiontype', 'remarkcategory')
+    search_fields = (
+        'checkno', 'payeename', 'remarks',
+        'admissiontype', 'admissionno', 'status',
+        'patientname', 'patientnameinitials',
+        'remarkcategory', 'remarkdetail'
+    )
 
