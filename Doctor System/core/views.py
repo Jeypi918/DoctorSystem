@@ -511,7 +511,13 @@ class OutstandingReportListView(ListView):
                 Q(doctype__icontains=q) |
                 Q(documentstatus__icontains=q) |
                 Q(remarks__icontains=q) |
-                Q(PFRFtype__icontains=q)
+                Q(PFRFtype__icontains=q) |
+                Q(admissiontype__icontains=q) |
+                Q(admissionno__icontains=q) |
+                Q(status__icontains=q) |
+                Q(patientname__icontains=q) |
+                Q(patientnameinitials__icontains=q) |
+                Q(remarkdetail__icontains=q)
             )
         if date_from:
             queryset = queryset.filter(duedate__gte=date_from)

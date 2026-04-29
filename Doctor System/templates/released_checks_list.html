@@ -17,24 +17,25 @@
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Check Date</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Release Date</th>
               {% if request.user.userprofile.role != 'doctor' %}
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Payee</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Vendor</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor</th>
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Vendor</th> -->
               {% endif %}
               {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Bank</th>
               {% endif %}
-              {% if request.user.userprofile.role != 'doctor' %}
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remarks</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission Type</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission No</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Status</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Category</th>
-              
-              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th> -->
-               {% endif %}
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Detail</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Amount</th>
+              {% if request.user.userprofile.role != 'doctor' %}
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remarks</th> -->
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission Type</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission No</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Status</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Category</th>              
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th> -->
+               {% endif %}
+              
+              
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -45,13 +46,16 @@
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm  text-gray-900">{{ rc.releasedate|date:"Y-m-d"|default:"—" }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.payee }}">{{ rc.payee|default:"—" |truncatechars:40 }}</td>
-                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.vendorname }}">{{ rc.vendorname|default:"—" |truncatechars:40 }}</td>
+                <!-- <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.vendorname }}">{{ rc.vendorname|default:"—" |truncatechars:40 }}</td> -->
                 {% endif %}
                 {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.bankname|default:"—" }}</td>
                 {% endif %}
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientnameinitials|default:"—" }}</td>               
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarkdetail|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">₱ {{ rc.amount|floatformat:2 }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarks|default:"—" }}</td>
+                <!-- <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarks|default:"—" }}</td> -->
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.admissiontype|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.admissionno|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.status|default:"—" }}</td>
@@ -59,9 +63,8 @@
                 
                 <!-- <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientname|default:"—" }}</td> -->
                 {% endif %}
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientnameinitials|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarkdetail|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">₱ {{ rc.amount|floatformat:2 }}</td>
+
+
               </tr>
 
             {% endfor %}

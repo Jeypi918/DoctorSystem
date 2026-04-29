@@ -13,23 +13,31 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
             <tr>
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Date</th>
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Due Date</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doc Date</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Due Date</th>
               <!-- <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Settlement Date</th> -->
               {% if request.user.userprofile.role != 'doctor' %}
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Type</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doc Type</th>
               {% endif %}
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc No</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doc No</th>
               {% if request.user.userprofile.role != 'doctor' %}
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Vendor</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor</th>
+              {% endif %} 
+              {% if request.user.userprofile.role != 'doctor' %}
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Payments Adjustments</th>
               {% endif %}
-              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Amount</th>
-              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Payments Adjustments</th>
-              <th class="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">Balance</th>
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Remarks</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Detail</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Amount</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Balance</th>
               {% if request.user.userprofile.role != 'doctor' %}
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">PFRF Type</th>
-              <th class="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Doc Status</th>
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remarks</th> -->
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission Type</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission No</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Status</th>
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">PFRF Type</th> -->
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doc Status</th>
               {% endif %}
             </tr>
 
@@ -37,23 +45,31 @@
           <tbody class="bg-white divide-y divide-gray-200">
             {% for op in outstanding_payables %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.docdate|date:"Y-m-d"|default:"—" }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.duedate|date:"Y-m-d"|default:"—" }}</td>
-                <!-- <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ op.settlementdate|date:"Y-m-d"|default:"—" }}</td> -->
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-medium text-gray-900">{{ op.docdate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-medium text-gray-900">{{ op.duedate|date:"Y-m-d"|default:"—" }}</td>
+                <!-- <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.settlementdate|date:"Y-m-d"|default:"—" }}</td> -->
                 {% if request.user.userprofile.role != 'doctor' %}
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ op.doctype|default:"—" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.doctype|default:"—" }}</td>
                 {% endif %}
-                <td class="px-4 py-4 whitespace-nowrap font-semibold text-gray-900">{{ op.docno }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-center font-semibold text-gray-900">{{ op.docno }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
-                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.Vendor }}">{{ op.Vendor|default:"—" |truncatechars:40 }}</td>
+                <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.Vendor }}">{{ op.Vendor|default:"—" |truncatechars:40 }}</td>
                 {% endif %}
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ op.amount|floatformat:2 }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">₱ {{ op.paymentsadjustments|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right font-semibold">₱ {{ op.balance|floatformat:2 }}</td>
-                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.remarks }}">{{ op.remarks|default:"—" |truncatechars:40 }}</td>
+                {% endif %}
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.patientnameinitials|default:"—" }}</td>
+                <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.remarkdetail }}">{{ op.remarkdetail|default:"—" |truncatechars:40 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900">₱ {{ op.amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900  font-semibold">₱ {{ op.balance|floatformat:2 }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
-                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ op.PFRFtype }}">{{ op.PFRFtype|default:"—" |truncatechars:40 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ op.documentstatus|default:"—" }}</td>
+                <!-- <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.remarks }}">{{ op.remarks|default:"—" |truncatechars:40 }}</td> -->
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.admissiontype|default:"—" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.admissionno|default:"—" }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">{{ op.status|default:"—" }}</td>
+                <!-- <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.patientname }}">{{ op.patientname|default:"—" |truncatechars:40 }}</td> -->
+                <!-- <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.PFRFtype }}">{{ op.PFRFtype|default:"—" |truncatechars:40 }}</td> -->
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">{{ op.documentstatus|default:"—" }}</td>
                 {% endif %}
               </tr>
 
