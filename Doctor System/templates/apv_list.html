@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load format_tags %}
 {% block content %}
 <div class="max-w-none mx-auto px-4 py-8 lg:px-2">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
@@ -36,12 +37,12 @@
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.ap_category }}">{{ apv.ap_category|default:"—" |truncatechars:30 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.supplier_type }}">{{ apv.supplier_type|default:"—" |truncatechars:30 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.payee_name }}">{{ apv.payee_name|default:"—" |truncatechars:40 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ apv.amount|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₱ {{ apv.discount_amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">{{ apv.amount|ph_money }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ apv.discount_amount|ph_money }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ apv.ewt_rate|floatformat:2 }}%</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₱ {{ apv.ewt_amount|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-right">₱ {{ apv.net_amount|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">₱ {{ apv.balance|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ apv.ewt_amount|ph_money }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-right">{{ apv.net_amount|ph_money }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">{{ apv.balance|ph_money }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.remarks_notes }}">{{ apv.remarks_notes|default:"—" |truncatechars:50 }}</td>
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ apv.posted_by }}">{{ apv.posted_by|default:"—" |truncatechars:30 }}</td>
               </tr>

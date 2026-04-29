@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load format_tags %}
 {% block content %}
 <div class="max-w-none mx-auto px-4 py-8 lg:px-2">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
@@ -35,7 +36,6 @@
               <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th> -->
                {% endif %}
               
-              
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -53,7 +53,7 @@
                 {% endif %}
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientnameinitials|default:"—" }}</td>               
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarkdetail|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">₱ {{ rc.amount|floatformat:2 }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">{{ rc.amount|ph_money }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <!-- <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarks|default:"—" }}</td> -->
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.admissiontype|default:"—" }}</td>
@@ -115,4 +115,3 @@
   {% endif %}
 </div>
 {% endblock %}
-

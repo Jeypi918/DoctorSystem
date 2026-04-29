@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load format_tags %}
 {% block content %}
 <div class="max-w-none mx-auto px-4 py-8 lg:px-2">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
@@ -56,12 +57,12 @@
                 <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.Vendor }}">{{ op.Vendor|default:"—" |truncatechars:40 }}</td>
                 {% endif %}
                 {% if request.user.userprofile.role != 'doctor' %}
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">₱ {{ op.paymentsadjustments|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">{{ op.paymentsadjustments|ph_money }}</td>
                 {% endif %}
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.patientnameinitials|default:"—" }}</td>
                 <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.remarkdetail }}">{{ op.remarkdetail|default:"—" |truncatechars:40 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900">₱ {{ op.amount|floatformat:2 }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900  font-semibold">₱ {{ op.balance|floatformat:2 }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900">{{ op.amount|ph_money }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-900  font-semibold">{{ op.balance|ph_money }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <!-- <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ op.remarks }}">{{ op.remarks|default:"—" |truncatechars:40 }}</td> -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900">{{ op.admissiontype|default:"—" }}</td>
