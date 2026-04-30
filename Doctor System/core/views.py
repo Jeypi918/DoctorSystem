@@ -382,7 +382,7 @@ class ReleasedCheckListView(ListView):
     model = ReleasedCheck
     template_name = 'released_checks_list.html'
     context_object_name = 'released_checks'
-    paginate_by = 10
+    paginate_by = 15
 
     @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
@@ -437,7 +437,7 @@ class UnreleasedCheckListView(ListView):
     model = UnreleasedCheck
     template_name = 'unreleased_checks_list.html'
     context_object_name = 'unreleased_checks'
-    paginate_by = 10
+    paginate_by = 15
 
     @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
@@ -487,7 +487,7 @@ class OutstandingReportListView(ListView):
     model = OutstandingPayable
     template_name = 'outstanding_report.html'
     context_object_name = 'outstanding_payables'
-    paginate_by = 10
+    paginate_by = 15
 
     @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
@@ -537,7 +537,7 @@ class APVListView(ListView):
     model = APV
     template_name = 'apv_list.html'
     context_object_name = 'apvouchers'
-    paginate_by = 10
+    paginate_by = 15
 
     @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
@@ -581,7 +581,7 @@ class CheckReportListView(ListView):
     model = CheckReport
     template_name = 'check_report_list.html'
     context_object_name = 'check_reports'
-    paginate_by = 10
+    paginate_by = 15
 
     @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
