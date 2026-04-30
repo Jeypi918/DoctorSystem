@@ -80,13 +80,13 @@
           {% if page_obj.has_previous %}
             <a href="?{{ query_params }}&page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">First</a>
           {% endif %}
-            {% with page_range=page_obj.paginator.page_range current=page_obj.number total=page_obj.paginator.num_pages %}
+{% with page_range=page_obj.paginator.page_range current=page_obj.number total=page_obj.paginator.num_pages %}
+              {% if current > 5 %}
             <a href="?{{ query_params }}&page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">1</a>
-              {% if current > 4 %}
                 <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
               {% endif %}
               {% for num in page_range %}
-                {% if num >= current|add:"-2" and num <= current|add:"2" %}
+                {% if num >= current|add:"-5" and num <= current|add:"5" %}
                   {% if num == current %}
                     <span class="px-4 py-2 bg-navy-500 text-white rounded-lg font-bold shadow">{{ num }}</span>
                   {% else %}
@@ -94,10 +94,10 @@
                   {% endif %}
                 {% endif %}
               {% endfor %}
-              {% if current < total|add:"-3" %}
+              {% if current < total|add:"-5" %}
                 <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
               {% endif %}
-              {% if total > 1 %}
+              {% if current < total|add:"-5" and total > 1 %}
             <a href="?{{ query_params }}&page={{ total }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">{{ total }}</a>
               {% endif %}
             {% endwith %}
