@@ -416,7 +416,6 @@ class ReleasedCheckListView(ListView):
                 Q(patientnameinitials__icontains=q) |
                 Q(remarkcategory__icontains=q) |
                 Q(remarkdetail__icontains=q)
-                
             )
         if date_from:
             queryset = queryset.filter(releasedate__gte=date_from)
@@ -466,12 +465,19 @@ class UnreleasedCheckListView(ListView):
                 Q(patientname__icontains=q) |
                 Q(patientnameinitials__icontains=q) |
                 Q(remarkcategory__icontains=q) |
-                Q(remarkdetail__icontains=q)
+                Q(remarkdetail__icontains=q) |
+                Q(discharge_date__icontains=q)
             )
         if date_from:
             queryset = queryset.filter(checkdate__gte=date_from)
         if date_to:
             queryset = queryset.filter(checkdate__lte=date_to)
+        discharge_from = self.request.GET.get('discharge_from')
+        discharge_to = self.request.GET.get('discharge_to')
+        if discharge_from:
+            queryset = queryset.filter(discharge_date__date__gte=discharge_from)
+        if discharge_to:
+            queryset = queryset.filter(discharge_date__date__lte=discharge_to)
 
         return queryset
 
@@ -517,12 +523,19 @@ class OutstandingReportListView(ListView):
                 Q(status__icontains=q) |
                 Q(patientname__icontains=q) |
                 Q(patientnameinitials__icontains=q) |
-                Q(remarkdetail__icontains=q)
+                Q(remarkdetail__icontains=q) |
+                Q(discharge_date__icontains=q)
             )
         if date_from:
             queryset = queryset.filter(duedate__gte=date_from)
         if date_to:
             queryset = queryset.filter(duedate__lte=date_to)
+        discharge_from = self.request.GET.get('discharge_from')
+        discharge_to = self.request.GET.get('discharge_to')
+        if discharge_from:
+            queryset = queryset.filter(discharge_date__date__gte=discharge_from)
+        if discharge_to:
+            queryset = queryset.filter(discharge_date__date__lte=discharge_to)
 
         return queryset
 

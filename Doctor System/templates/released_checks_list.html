@@ -24,7 +24,9 @@
               {% if request.user.userprofile.role != 'doctor' %}
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Bank</th>
               {% endif %}
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Discharge Date</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient</th>
+              
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Detail</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Amount</th>
               {% if request.user.userprofile.role != 'doctor' %}
@@ -42,8 +44,8 @@
             {% for rc in released_checks %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ rc.checkno }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.checkdate|date:"Y-m-d"|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm  text-gray-900">{{ rc.releasedate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ rc.checkdate|date:"m/d/Y"|default:"—" }} </td>  
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-sm  text-gray-900">{{ rc.releasedate|date:"m/d/Y"|default:"—" }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.payee }}">{{ rc.payee|default:"—" |truncatechars:40 }}</td>
                 <!-- <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ rc.vendorname }}">{{ rc.vendorname|default:"—" |truncatechars:40 }}</td> -->
@@ -51,7 +53,9 @@
                 {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.bankname|default:"—" }}</td>
                 {% endif %}
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.discharge_date|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientnameinitials|default:"—" }}</td>               
+                
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarkdetail|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">{{ rc.amount|ph_money }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}

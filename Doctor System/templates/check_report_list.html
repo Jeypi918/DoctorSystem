@@ -48,7 +48,7 @@
             {% for cr in check_reports %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ cr.voucherno|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ cr.voucherdate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ cr.voucherdate|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-bold text-gray-900">{{ cr.amount|ph_money }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.cvtype|default:"—" |truncatechars:20 }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900 ">{{ cr.cashamount|ph_money }}</td>
@@ -58,8 +58,8 @@
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.payto }}">{{ cr.payto|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.address }}">{{ cr.address|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.apvno|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.apvdate|date:"Y-m-d"|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.duedate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.apvdate|date:"m/d/Y"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.duedate|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-bold text-gray-900">{{ cr.netamount|ph_money }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.accountno|default:"—" }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.acctdesc }}">{{ cr.acctdesc|default:"—" |truncatechars:40 }}</td>
@@ -67,14 +67,14 @@
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900 ">{{ cr.credit|ph_money }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.banks }}">{{ cr.banks|default:"—" |truncatechars:40 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.checkno|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.checkdate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ cr.checkdate|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm text-gray-900 ">{{ cr.checkamt|ph_money }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.convertion|default:"—" |truncatechars:20 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900">{{ cr.cvcategory|default:"—" |truncatechars:20 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.remarks }}">{{ cr.remarks|default:"—" |truncatechars:40 }}</td>
                 <!-- <td class="px-4 py-4 text-sm text-gray-900">{{ cr.invcno|default:"—" }}</td> -->
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ cr.remarksapv }}">{{ cr.remarksapv|default:"—" |truncatechars:40 }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ cr.releasedate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ cr.releasedate|date:"m/d/Y"|default:"—" }}</td>
               </tr>
             {% endfor %}
           </tbody>

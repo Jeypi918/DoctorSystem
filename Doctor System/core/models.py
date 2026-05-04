@@ -130,7 +130,7 @@ class ReleasedCheck(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     bankname = models.CharField(max_length=100)
 
-    # New columns added to the releasedchecks table
+# New columns added to the releasedchecks table
     remarks = models.CharField(max_length=255, blank=True, null=True, db_column='Remarks')
     admissiontype = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionType')
     admissionno = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionNo')
@@ -139,6 +139,7 @@ class ReleasedCheck(models.Model):
     patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
     remarkcategory = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkCategory')
     remarkdetail = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkDetail')
+    discharge_date = models.DateTimeField(db_column='DischargeDate', null=True, blank=True)
 
     class Meta:
         managed = False
@@ -164,6 +165,7 @@ class UnreleasedCheck(models.Model):
     patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
     remarkcategory = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkCategory')
     remarkdetail = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkDetail')
+    discharge_date = models.DateTimeField(db_column='DischargeDate', null=True, blank=True)
 
     class Meta:
         managed = False
@@ -194,6 +196,7 @@ class OutstandingPayable(models.Model):
     patientname = models.CharField(max_length=255, blank=True, null=True, db_column='PatientName')
     patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
     remarkdetail = models.CharField(max_length=255, blank=True, null=True, db_column='RemarkDetail')
+    discharge_date = models.DateTimeField(db_column='DischargeDate', null=True, blank=True)
 
     class Meta:
         managed = False
@@ -260,3 +263,4 @@ class CheckReport(models.Model):
 
     def __str__(self):
         return f"{self.voucherno} - {self.payto} - ₱{self.netamount}"
+

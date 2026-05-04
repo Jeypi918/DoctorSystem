@@ -33,7 +33,7 @@
             {% for apv in apvouchers %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ apv.ap_voucher_no|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ apv.ap_voucher_date|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ apv.ap_voucher_date|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ apv.ap_category }}">{{ apv.ap_category|default:"—" |truncatechars:30 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ apv.supplier_type }}">{{ apv.supplier_type|default:"—" |truncatechars:30 }}</td>
                 <td class="px-4 py-4 text-center text-sm text-gray-900 max-w-xs truncate" title="{{ apv.payee_name }}">{{ apv.payee_name|default:"—" |truncatechars:40 }}</td>

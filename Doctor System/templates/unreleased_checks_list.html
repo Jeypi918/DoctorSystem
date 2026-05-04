@@ -20,7 +20,9 @@
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor</th>
               <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Month Value</th> -->
               {% endif %}
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Discharge Date</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient</th>
+              
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Remark Detail</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Amount</th>
               {% if request.user.userprofile.role != 'doctor' %}
@@ -36,12 +38,14 @@
             {% for uc in unreleased_checks %}
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ uc.checkno|default:"—" }}</td>
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ uc.checkdate|date:"Y-m-d"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ uc.checkdate|date:"m/d/Y"|default:"—" }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ uc.payeename }}">{{ uc.payeename|default:"—" |truncatechars:40 }}</td>
                 <!-- <td class="px-4 py-4 text-sm text-center text-gray-900 max-w-xs truncate" title="{{ uc.monthvalue }}">{{ uc.monthvalue|default:"—" |truncatechars:40 }}</td> -->
                 {% endif %}
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ uc.discharge_date|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ uc.patientnameinitials|default:"—" }}</td>
+                
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ uc.remarkdetail|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-bold text-gray-900">{{ uc.amount|ph_money }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
