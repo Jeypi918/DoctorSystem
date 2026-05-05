@@ -40,7 +40,7 @@
 </head>
 <body>
 <div class="layout min-h-screen bg-gray-50">
-    <aside class="sidebar" id="sidebar">
+<aside class="sidebar flex flex-col" id="sidebar">
       <div class="brand">
         <img src="/image/CommonwealthMed.jpg" alt="Hospital Logo" class="logo" />
         <h2 class="brand-text">Doctor Portal</h2>
@@ -71,8 +71,18 @@
       {% else %}
         <a class="auth" href="{% url 'login' %}">Log in</a>
         <a class="auth" href="{% url 'signup' %}">Sign up</a>
-      {% endif %}
-    </aside>
+     {% endif %}
+  
+<div class="sidebar-footer mt-auto pt-6 pb-6 px-4 text-center border-t border-white/20">
+  <p class="text-xs text-gray-300 leading-relaxed">
+    Commonwealth Hospital<br>
+    and Medical Center<br>
+    Doctor System<br>
+    All Rights Reserved © 2026
+  </p>
+</div>
+</aside>
+
     
     <!-- Mobile sidebar backdrop -->
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
