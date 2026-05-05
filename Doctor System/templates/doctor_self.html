@@ -127,7 +127,7 @@
     </div>
 
     <div class="card card-transactions">
-      <div class="card-title">PF Transactions</div>
+      <div class="card-title">Transactions</div>
       <div class="card-value">{{ transaction_count|abbrev }}</div>
       <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
@@ -173,7 +173,7 @@
       {% else %}
         <div class="text-center py-12">
           <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i>
-          <p class="text-xl text-gray-500">No transactions yet</p>
+          <!-- <p class="text-xl text-gray-500">No transactions yet</p> -->
         </div>
       {% endif %}
     </div>

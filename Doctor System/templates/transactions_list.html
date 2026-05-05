@@ -2,7 +2,7 @@
 {% load abbreviate_tags %}
 {% block content %}
 <div class="page-header">
-  <h1>PF Transactions</h1>
+  <h1>Transactions</h1>
   <a href="{% url 'transaction_add' %}" class="btn-primary">+ Add Transaction</a>
 </div>
 
@@ -85,6 +85,9 @@
   </div>
   {% endif %}
 {% else %}
-  <p class="no-data">No transactions yet. <a href="{% url 'transaction_add' %}">Add the first transaction</a></p>
+  <!-- <p  -->
+  <!-- class="no-data"> -->
+  <!-- No transactions yet.  -->
+    <!-- <a href="{% url 'transaction_add' %}">Add the first transaction</a></p> -->
 {% endif %}
 {% endblock %}
