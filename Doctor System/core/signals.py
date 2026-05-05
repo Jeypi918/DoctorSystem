@@ -6,7 +6,7 @@ from .models import UserProfile, EmdDoctor
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        UserProfile.objects.get_or_create(user=instance, defaults={'role': 'doctor'})
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
@@ -15,20 +15,6 @@ def save_user_profile(sender, instance, **kwargs):
 # Optional: Auto-create EmdDoctor for new doctors (if needed)
 @receiver(post_save, sender=User)
 def create_doctor_profile(sender, instance, created, **kwargs):
-    if created:
-        try:
-            profile = instance.userprofile
-            if profile.role == 'doctor':
-                EmdDoctor.objects.get_or_create(
-                    doctorsid=instance.id,
-                    defaults={
-                        'doctors_name': f"{instance.last_name}, {instance.first_name}",
-                        'specialization': 'General',
-                        'active': True,
-                        'tin': '',
-                        'smsplusmobileno': '',
-                    }
-                )
-        except UserProfile.DoesNotExist:
-            pass
+    # Disabled to avoid cycle with userprofile access before create_user_profile
+    pass
 

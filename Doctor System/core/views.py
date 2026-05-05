@@ -26,7 +26,15 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            UserProfile.objects.update_or_create(user=user, defaults={'role': form.cleaned_data['role']})
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            role_value = form.cleaned_data['role']
+            print(f"DEBUG: Setting role '{role_value}' (type {type(role_value)}) for user '{user.username}' (profile created: {created})")
+            profile.role = role_value
+            profile.save()
+            print(f"DEBUG: Profile saved. Final role: '{profile.role}'")
+            # Verify DB
+            profile.refresh_from_db()
+            print(f"DEBUG: After refresh role: '{profile.role}'")
             login(request, user)
             return redirect('home')
     else:
@@ -55,30 +63,46 @@ def logout_view(request):
 @login_required(login_url='login')
 def get_current_doctor(request):
     """
-    Helper: Match username to EmdDoctor (reuse my_doctor_view logic)
+    Fixed: Prioritize exact pk+lastname match for Abesamis1038 etc., strict fallback.
     """
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
+        print(f"get_current_doctor: Role check failed for {request.user.username}")
         return None
-    
-    username = request.user.username.lower()
-    search_terms = [
-        username,
-        username.replace('abbariao', 'Abbariao, Maritoni'),
-        'abbariao, maritoni',
-        'maritoni abbariao',
-        request.user.username.title()
-    ]
-    
-    my_doctor = None
-    for term in search_terms:
-        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
-        if my_doctor:
-            break
-    
-    if not my_doctor:
-        my_doctor = EmdDoctor.objects.filter(active=True).first()
-    
-    return my_doctor
+
+    username = request.user.username
+    print(f"get_current_doctor DEBUG: username='{username}'")
+
+    # Regex pk+lastname PRIORITY
+    import re
+    match = re.match(r'^(.+?)(\d{4,6})$', username)  # 4-6 digits pk
+    if match:
+        lastname_part, pk_str = match.groups()
+        try:
+            doctor_pk = int(pk_str)
+            print(f"Regex match: lastname='{lastname_part}', pk={doctor_pk}")
+            candidates = EmdDoctor.objects.filter(pk_emddoctors=doctor_pk)
+            print(f"Found {candidates.count()} doctors with pk={doctor_pk}")
+            for cand in candidates:
+                if lastname_part.lower() in cand.doctors_name.lower():
+                    print(f"*** MATCHED: {cand.doctors_name} (pk {cand.pk_emddoctors}) for {username}")
+                    return cand
+            print(f"No name match for pk={doctor_pk}")
+        except ValueError:
+            pass
+
+    # STRICT Fuzzy ONLY if exact lastname in name AND no special abbariao
+    if 'abbariao' not in username.lower():
+        name_terms = [username.lower(), username.title()]
+        for term in name_terms:
+            my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
+            if my_doctor:
+                print(f"Fuzzy MATCHED: {my_doctor.doctors_name} for {username}")
+                return my_doctor
+
+    # Final fallback
+    fallback = EmdDoctor.objects.filter(active=True).first()
+    print(f"FALLBACK to {fallback.doctors_name if fallback else 'NONE'} for {username}")
+    return fallback
 
 
 @login_required(login_url='login')
@@ -110,11 +134,23 @@ def home_view(request):
     transaction_count = pf_total
     statement_count = StatementOfAccount.objects.count()
 
+    # Compute welcome display for doctors - Proper case: Dr. Lastname
+    try:
+        if hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'doctor' and my_doctor:
+            # Title case lastname: DR.BARTOLO -> Bartolo
+            lastname_proper = my_doctor.last_name.strip().title()
+            welcome_display = f"Dr. {lastname_proper}"
+        else:
+            welcome_display = request.user.username
+    except AttributeError:
+        welcome_display = request.user.username
+
     return render(request, 'home.html', {
         'doctor_count': doctor_count,
         'patient_count': patient_count,
         'transaction_count': transaction_count,
         'statement_count': statement_count,
+        'welcome_display': welcome_display,
     })
 
 # ===== DOCTOR VIEWS =====
@@ -162,32 +198,40 @@ def doctor_detail_view(request, pk):
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
     
-    # Generate consistent username/password from doctor name
-    username = f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
+    # New: Use lastname + pk_emddoctors, validate PRCno uniqueness?
+    if not doctor.prcno:
+        return render(request, 'confirm_reset.html', {
+            'doctor': doctor, 'error': 'PRC No required for reset.'
+        })
     
-    # Safe user handling - get_or_create User, ensure UserProfile exists
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        user = User.objects.create_user(username=username, password='temp123!')
+    lastname = doctor.doctors_name.split(',', 1)[0].strip().title() if ',' in doctor.doctors_name else 'Doctor'
+    username = f"{lastname}{doctor.pk_emddoctors}"
     
-    # Always ensure profile exists without get_or_create conflict
-    profile, _ = UserProfile.objects.get_or_create(user=user, defaults={'role': 'doctor'})
+    # Get or create User
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={'is_staff': True, 'is_active': True}
+    )
+    if created:
+        user.set_unusable_password()  # Will set below
     
-    # Link to doctor profile using doctorsid (legacy field)
+    # Ensure profile
+    profile, _ = UserProfile.objects.get_or_create(
+        user=user, defaults={'role': 'doctor'}
+    )
+    
+    # Link doctorsid
     doctor.doctorsid = user.id
     doctor.save(update_fields=['doctorsid'])
     
     if request.method == 'POST':
         user.set_password(username)
         user.save()
-        messages.success(request, f'Password reset for {doctor}! Username/Password: {username}')
+        messages.success(request, f'Reset for {doctor.doctors_name}. Username/Pwd: {username}')
         return redirect('doctor_detail', pk=pk)
     
     return render(request, 'confirm_reset.html', {
-        'doctor': doctor,
-        'new_password': username,
-        'username': username
+        'doctor': doctor, 'username': username, 'new_password': username
     })
 
 @login_required(login_url='login')
@@ -232,33 +276,11 @@ def doctor_delete_view(request, pk):
 
 @doctor_required
 def my_doctor_view(request):
-    # Match doctors by name similarity to username
-    username = request.user.username.lower()
-    # Try exact, last_first, first_last, abbariao variations
-    search_terms = [
-        username,
-        username.replace('abbariao', 'Abbariao, Maritoni'),
-        'abbariao, maritoni',
-        'maritoni abbariao',
-        request.user.username.title()
-    ]
-    
-    my_doctor = None
-    for term in search_terms:
-        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
-        if my_doctor:
-            break
-    
-    # Fallback to first active doctor if no match
-    if not my_doctor:
-        my_doctor = EmdDoctor.objects.filter(active=True).first()
-        if my_doctor:
-            print(f'FALLBACK to {my_doctor.doctors_name} for {request.user.username}')
-    
+    my_doctor = get_current_doctor(request)
     if not my_doctor:
         return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username})
     
-    print(f'Matched {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors}) for {request.user.username}')
+    print(f"my_doctor_view CONFIRMED: {my_doctor.doctors_name} (pk {my_doctor.pk_emddoctors}) for {request.user.username}")
 
     transactions = PFTransaction.objects.filter(doctor=my_doctor)
     patients = Patient.objects.filter(pftransaction__doctor=my_doctor).distinct()

@@ -56,7 +56,17 @@ class EmdDoctor(models.Model):
             first = parts[1].strip().split()[0] if len(parts[1].strip()) > 0 else ''
             return f"{last}, {first}"
         return self.doctors_name
-    
+
+    @property
+    def computed_username(self):
+        """ lastname{pk_emddoctors} e.g. Guzman1124 """
+        if ',' in self.doctors_name:
+            lastname = self.doctors_name.split(',', 1)[0].strip().title()
+        else:
+            parts = self.doctors_name.split()
+            lastname = parts[-1].title() if parts else 'Doctor'
+        return f"{lastname}{self.pk_emddoctors}"
+
     @property
     def first_name(self):
         if ',' in self.doctors_name:
