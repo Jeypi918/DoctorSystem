@@ -95,7 +95,20 @@ def doctor_reset_password_view(request, pk):
         except User.DoesNotExist:
             user = None
         if request.method == 'POST':
-            username = f"{doctor.first_name.lower().strip()}{doctor.last_name.lower().strip()}"
+            # New reset username/password scheme:
+            # LASTNAME(uppercase, before comma) + MM + YY where prcexpdate is e.g. 2028-12-30 => 123028
+            if not doctor.prcexpdate:
+                # fallback to legacy behavior if missing
+                lastname = doctor.last_name.strip().upper() if doctor.last_name else 'DOCTOR'
+                username = f"{lastname}{doctor.pk_emddoctors}"
+            else:
+                lastname = doctor.doctors_name.split(',', 1)[0].strip().upper() if ',' in doctor.doctors_name else (doctor.last_name.strip().upper() if doctor.last_name else 'DOCTOR')
+                suffix = f"{doctor.prcexpdate.month:02d}{doctor.prcexpdate.year % 100:02d}"
+                username = f"{lastname}{suffix}"
+
+            user.first_name = doctor.first_name or ''
+            user.last_name = doctor.last_name or ''
+            user.email = getattr(doctor, 'email_doctors', None) or getattr(doctor, 'email', None) or user.email
             user.set_password(username)
             user.save()
             messages.success(request, f'Password reset for {doctor}! New password: {username}')
@@ -148,46 +161,103 @@ def doctor_delete_view(request, pk):
         return redirect('doctors')
     return render(request, 'confirm_delete.html', {'object': doctor, 'object_name': 'Doctor'})
 
+def get_current_doctor_emd(request):
+    """Match doctor profile using username format derived from prcexpdate.
+
+    Username is expected to be:
+      LASTNAME (uppercase, before comma) + MM + YY
+    Example:
+      "ABAD" + (prcexpdate=2028-12-30) => "ABAD1228"
+
+    This replaces broad icontains matching that can mis-link users.
+    """
+    # Role check
+    try:
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
+            return None
+    except Exception:
+        return None
+
+    username = (request.user.username or '').strip()
+    if not username:
+        return None
+
+    # Prefer a direct user-to-doctor link when available.
+    linked_doctor = EmdDoctor.objects.filter(doctorsid=request.user.id, active=True).first()
+    if linked_doctor:
+        return linked_doctor
+
+    import re
+    # split into prefix letters + trailing digits
+    m = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
+    if not m:
+        return EmdDoctor.objects.filter(active=True).first()
+
+    prefix = m.group('prefix').strip().upper()
+    digits = m.group('digits')
+
+    # Interpret suffix as MMYY.
+    # If digits is 4 => MMYY, if 5/6 => try last 4 as MMYY.
+    mm_yy = digits[-4:]
+    try:
+        month = int(mm_yy[:2])
+        year2 = int(mm_yy[2:])
+    except ValueError:
+        month = None
+        year2 = None
+
+    candidates = EmdDoctor.objects.all()
+    if month and 1 <= month <= 12:
+        # year2 matches prcexpdate.year % 100
+        candidates = candidates.filter(prcexpdate__isnull=False).filter(prcexpdate__month=month)
+        # year%100 filter via annotation isn't available in this project; do it in python safely.
+        candidates = [d for d in candidates if d.prcexpdate and (d.prcexpdate.year % 100) == year2]
+
+        # Match prefix against the LASTNAME token only.
+        # doctors_name is expected like: "LASTNAME, Firstname ...".
+        for d in candidates:
+            name = (d.doctors_name or '').strip()
+            last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
+            if last_token == prefix:
+                return d
+
+    # Strict fallback: LASTNAME token exact match
+    for d in EmdDoctor.objects.filter(active=True):
+        name = (d.doctors_name or '').strip()
+        last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
+        if last_token == prefix:
+            return d
+
+
+    return EmdDoctor.objects.filter(active=True).first()
+
+
 @doctor_required
 def my_doctor_view(request):
-    # Match doctors by name similarity to username
-    username = request.user.username.lower()
-    # Try exact, last_first, first_last, abbariao variations
-    search_terms = [
-        username,
-        username.replace('abbariao', 'Abbariao, Maritoni'),
-        'abbariao, maritoni',
-        'maritoni abbariao',
-        request.user.username.title()
-    ]
-    
-    my_doctor = None
-    for term in search_terms:
-        my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
-        if my_doctor:
-            break
-    
-    # Fallback to first active doctor if no match
+    my_doctor = get_current_doctor_emd(request)
     if not my_doctor:
-        my_doctor = EmdDoctor.objects.filter(active=True).first()
-        if my_doctor:
-            print(f'FALLBACK to {my_doctor.doctors_name} for {request.user.username}')
-    
-    if not my_doctor:
-        return render(request, 'doctor_self.html', {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username})
-    
+        return render(
+            request,
+            'doctor_self.html',
+            {'error': 'No doctor profile found. Contact admin.', 'debug_username': request.user.username},
+        )
+
     print(f'Matched {my_doctor.doctors_name} (ID {my_doctor.pk_emddoctors}) for {request.user.username}')
 
     transactions = PFTransaction.objects.filter(doctor=my_doctor)
     patients = Patient.objects.filter(pftransaction__doctor=my_doctor).distinct()
     soa_list = StatementOfAccount.objects.filter(doctor=my_doctor).order_by('-start_date')
 
-    return render(request, 'doctor_self.html', {
-        'doctor': my_doctor,
-        'transactions': transactions,
-        'patients': patients,
-        'soa_list': soa_list,
-    })
+    return render(
+        request,
+        'doctor_self.html',
+        {
+            'doctor': my_doctor,
+            'transactions': transactions,
+            'patients': patients,
+            'soa_list': soa_list,
+        },
+    )
 
 # ===== PATIENT VIEWS =====
 class PatientListView(ListView):

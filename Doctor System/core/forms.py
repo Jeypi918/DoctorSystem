@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile
 
 class SignUpForm(UserCreationForm):
-    first_name = forms.CharField(max_length=150, label='First Name')
-    last_name = forms.CharField(max_length=150, label='Last Name')
+    firstname = forms.CharField(max_length=150, label='First Name')
+    lastname = forms.CharField(max_length=150, label='Last Name')
     email = forms.EmailField(max_length=254, help_text='Required. Enter a valid email address.')
     role = forms.ChoiceField(choices=UserProfile.ROLE_CHOICES, label='Role')
     specialty = forms.CharField(max_length=255, label='Specialty', required=False, widget=forms.TextInput(attrs={'class': 'form-input'}))
@@ -46,7 +46,7 @@ class EmdDoctorForm(forms.ModelForm):
 
     class Meta:
         model = EmdDoctor
-        fields = ['doctors_name', 'smsplusmobileno', 'tin', 'prctype', 'prcno', 'prcexpdate', 'phicno', 'phicexpdate', 'pmccno', 'doctorsid', 'bankacctname', 'bankacctno', 's2no', 's2expirydate', 'dctrcategory', 'specialization', 'classcode', 'ewtrate']
+        fields = ['doctors_name', 'smsplusmobileno', 'tin', 'prctype', 'prcno', 'prcexpdate', 'phicno', 'phicexpdate', 'pmccno', 'doctorsid', 'bankacctname', 'bankacctno', 's2no', 's2expirydate', 'dctrcategory', 'specialization', 'birthdate', 'classcode', 'ewtrate']
         exclude = ['user', 'active', 'fk_psphicpfgroup', 'phicissuancedate', 'vatcondition', 'service_type', 'specialize', 'pk_emddoctors']
         widgets = {
             'doctors_name': forms.TextInput(attrs={'class': 'form-input'}),
@@ -64,6 +64,7 @@ class EmdDoctorForm(forms.ModelForm):
             'specialization': forms.TextInput(attrs={'class': 'form-input'}),
             'classcode': forms.TextInput(attrs={'class': 'form-input'}),
             'ewtrate': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'birthdate': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):

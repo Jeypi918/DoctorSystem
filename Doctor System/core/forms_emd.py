@@ -47,7 +47,7 @@ class EmdDoctorForm(forms.ModelForm):
 
     class Meta:
         model = EmdDoctor
-        fields = ['doctors_name', 'smsplusmobileno', 'tin', 'prctype', 'prcno', 'prcexpdate', 'phicno', 'phicexpdate', 'pmccno', 'doctorsid', 'bankacctname', 'bankacctno', 's2no', 's2expirydate', 'dctrcategory', 'specialization', 'classcode', 'ewtrate']
+        fields = ['doctors_name', 'smsplusmobileno', 'tin', 'prctype', 'prcno', 'prcexpdate', 'phicno', 'phicexpdate', 'pmccno', 'doctorsid', 'bankacctname', 'bankacctno', 's2no', 's2expirydate', 'dctrcategory', 'specialization', 'birthdate', 'classcode', 'ewtrate']
         exclude = ['user', 'active', 'fk_psphicpfgroup', 'phicissuancedate', 'vatcondition', 'service_type', 'specialize', 'pk_emddoctors']
         widgets = {
             'doctors_name': forms.TextInput(attrs={'class': 'form-input'}),
@@ -65,6 +65,7 @@ class EmdDoctorForm(forms.ModelForm):
             'specialization': forms.TextInput(attrs={'class': 'form-input'}),
             'classcode': forms.TextInput(attrs={'class': 'form-input'}),
             'ewtrate': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'birthdate': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):

@@ -62,47 +62,72 @@ def logout_view(request):
 # ===== DASHBOARD VIEW =====
 @login_required(login_url='login')
 def get_current_doctor(request):
-    """
-    Fixed: Prioritize exact pk+lastname match for Abesamis1038 etc., strict fallback.
+    """Resolve the logged-in doctor profile from the doctor username.
+
+    Username format after reset:
+      LASTNAME(uppercase, portion before comma) + MM + YY
+      Example: "BARTOLO" + (prcexpdate=2028-12-30) => "BARTOLO123028".
+
+    Keeps a legacy fallback to LASTNAME + pk_emddoctors if MMYY cannot be parsed.
     """
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
         print(f"get_current_doctor: Role check failed for {request.user.username}")
         return None
 
-    username = request.user.username
+    username = (request.user.username or '').strip()
     print(f"get_current_doctor DEBUG: username='{username}'")
+    if not username:
+        return None
 
-    # Regex pk+lastname PRIORITY
+    # Prefer a direct user-to-doctor link when available.
+    linked_doctor = EmdDoctor.objects.filter(doctorsid=request.user.id, active=True).first()
+    if linked_doctor:
+        return linked_doctor
+
     import re
-    match = re.match(r'^(.+?)(\d{4,6})$', username)  # 4-6 digits pk
-    if match:
-        lastname_part, pk_str = match.groups()
-        try:
-            doctor_pk = int(pk_str)
-            print(f"Regex match: lastname='{lastname_part}', pk={doctor_pk}")
-            candidates = EmdDoctor.objects.filter(pk_emddoctors=doctor_pk)
-            print(f"Found {candidates.count()} doctors with pk={doctor_pk}")
-            for cand in candidates:
-                if lastname_part.lower() in cand.doctors_name.lower():
-                    print(f"*** MATCHED: {cand.doctors_name} (pk {cand.pk_emddoctors}) for {username}")
-                    return cand
-            print(f"No name match for pk={doctor_pk}")
-        except ValueError:
-            pass
+    m = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
+    if not m:
+        return EmdDoctor.objects.filter(active=True).first()
 
-    # STRICT Fuzzy ONLY if exact lastname in name AND no special abbariao
-    if 'abbariao' not in username.lower():
-        name_terms = [username.lower(), username.title()]
-        for term in name_terms:
-            my_doctor = EmdDoctor.objects.filter(doctors_name__icontains=term).first()
-            if my_doctor:
-                print(f"Fuzzy MATCHED: {my_doctor.doctors_name} for {username}")
-                return my_doctor
+    prefix = m.group('prefix').strip().upper()
+    digits = m.group('digits')
+
+    # First try: interpret trailing digits as MMYY (use last 4 digits)
+    mm_yy = digits[-4:]
+    try:
+        month = int(mm_yy[:2])
+        year2 = int(mm_yy[2:])
+    except ValueError:
+        month = None
+        year2 = None
+
+    if month and 1 <= month <= 12:
+        candidates = EmdDoctor.objects.filter(active=True, prcexpdate__isnull=False, prcexpdate__month=month)
+        # year%100 match in python
+        candidates = [d for d in candidates if d.prcexpdate and (d.prcexpdate.year % 100) == year2]
+
+        for d in candidates:
+            name = (d.doctors_name or '').strip()
+            last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
+            if last_token == prefix:
+                return d
+
+    # Legacy fallback: LASTNAME + pk_emddoctors (original scheme)
+    # If digits is long enough, parse as pk.
+    try:
+        doctor_pk = int(digits)
+        candidates = EmdDoctor.objects.filter(active=True, pk_emddoctors=doctor_pk)
+        for cand in candidates:
+            if prefix.lower() in cand.doctors_name.lower():
+                return cand
+    except ValueError:
+        pass
 
     # Final fallback
     fallback = EmdDoctor.objects.filter(active=True).first()
     print(f"FALLBACK to {fallback.doctors_name if fallback else 'NONE'} for {username}")
     return fallback
+
 
 
 @login_required(login_url='login')
@@ -197,41 +222,94 @@ def doctor_detail_view(request, pk):
 @staff_required
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
-    
-    # New: Use lastname + pk_emddoctors, validate PRCno uniqueness?
+
+    # New reset scheme (based on PRC expiry date):
+    #   username/password seed: LASTNAME + MM + YY (year reduced to last 2 digits)
+    #   Example: "BARTOLO, ..." + prcexpdate=2028-12-30 => BARTOLO123028
+
+
     if not doctor.prcno:
         return render(request, 'confirm_reset.html', {
             'doctor': doctor, 'error': 'PRC No required for reset.'
         })
-    
-    lastname = doctor.doctors_name.split(',', 1)[0].strip().title() if ',' in doctor.doctors_name else 'Doctor'
-    username = f"{lastname}{doctor.pk_emddoctors}"
-    
+
+    # Expect doctors_name like: "LASTNAME, FIRSTNAME MIDDLE ..."
+    # Extract tokens to build username.
+    name = (doctor.doctors_name or '').strip()
+    if ',' in name:
+        lastname_token = name.split(',', 1)[0].strip()
+        firstpart = name.split(',', 1)[1].strip()
+    else:
+        # fallback: treat last word as lastname, first word as firstname
+        parts = name.split()
+        lastname_token = parts[-1] if parts else 'Doctor'
+        firstpart = ' '.join(parts[:-1]) if len(parts) > 1 else ''
+
+    lastname_title = lastname_token.strip().title() if lastname_token else 'Doctor'
+    first_tokens = [t for t in firstpart.split() if t]
+    firstname_concat = ''.join(first_tokens)  # no spaces
+
+    if doctor.prcexpdate:
+        # Password seed uses PRC expiry date:
+        #   suffix = MM + YY (year reduced to last 2 digits)
+        suffix = f"{doctor.prcexpdate.month:02d}{doctor.prcexpdate.year % 100:02d}"
+        password = f"{lastname_title}{suffix}"
+    else:
+        # If PRC expiry missing, keep legacy scheme to avoid breaking resets.
+        password = f"{lastname_title}{doctor.pk_emddoctors}"
+
+    username = f"{lastname_token.strip()}{firstname_concat}".lower()
+
     # Get or create User
     user, created = User.objects.get_or_create(
         username=username,
         defaults={'is_staff': True, 'is_active': True}
     )
     if created:
-        user.set_unusable_password()  # Will set below
-    
+        user.set_unusable_password()
+
     # Ensure profile
-    profile, _ = UserProfile.objects.get_or_create(
+    UserProfile.objects.get_or_create(
         user=user, defaults={'role': 'doctor'}
     )
-    
+
     # Link doctorsid
     doctor.doctorsid = user.id
     doctor.save(update_fields=['doctorsid'])
-    
+
+    # IMPORTANT: do not reset until the confirmation POST.
     if request.method == 'POST':
-        user.set_password(username)
+        # Only perform the reset if user clicked the confirm button.
+        if request.POST.get('confirm_reset') != '1':
+            return render(request, 'confirm_reset.html', {
+                'doctor': doctor,
+                'username': username,
+                'new_password': password,
+            })
+
+        # Update username/email/name to match doctor account expectations.
+        if username:
+            user.username = username
+
+        user.first_name = getattr(doctor, 'first_name', '') or ''
+        user.last_name = getattr(doctor, 'last_name', '') or ''
+
+        # If you store doctor email in emddoctors column, this will set it.
+        # (If the column doesn't exist, it will silently ignore due to getattr.)
+        email_value = getattr(doctor, 'email_doctors', None) or getattr(doctor, 'email', None)
+        if email_value:
+            user.email = email_value
+
+        user.set_password(password)
         user.save()
-        messages.success(request, f'Reset for {doctor.doctors_name}. Username/Pwd: {username}')
+        messages.success(request, f'Reset for {doctor.doctors_name}. Username: {username} Password: {password}')
         return redirect('doctor_detail', pk=pk)
-    
+
+
     return render(request, 'confirm_reset.html', {
-        'doctor': doctor, 'username': username, 'new_password': username
+        'doctor': doctor,
+        'username': username,
+        'new_password': password,
     })
 
 @login_required(login_url='login')

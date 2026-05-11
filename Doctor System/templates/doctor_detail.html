@@ -12,16 +12,42 @@
 <div class="detail-card">
   <div class="detail-row">
     <span class="label">Full Name:</span>
-    <span class="value">{{ doctor.full_name|default:doctor.first_name|add:" "|add:doctor.last_name|title }}</span>
+    <span class="value">{{ doctor.doctors_name }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">First Name:</span>
+    <span class="value">{{ doctor.firstname }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Middle Name:</span>
+    <span class="value">{{ doctor.middlename }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Last Name:</span>
+    <span class="value">{{ doctor.lastname }}</span>
+  </div>
+  <div class="detail-row">
+    <span class="label">Birthdate</span>
+    <span class="value">{{ doctor.birthdate_display|default:"—" }}</span>
   </div>
   <div class="detail-row">
     <span class="label">Email:</span>
-    <span class="value"><a href="mailto:{{ doctor.email }}">{{ doctor.email }}</a></span>
+    <span class="value">{{ doctor.email }}</span>
   </div>
   <div class="detail-row">
     <span class="label">Mobile:</span>
-    <span class="value">{{ doctor.smsplusmobileno }}</span>
+    <span class="value">
+      {% if doctor.mobilephone %}
+        {{ doctor.mobilephone }}
+      {% elif doctor.mobilephone2 %}
+        {{ doctor.mobilephone2 }}
+      {% else %}
+        {{ doctor.smsplusmobileno }}
+      {% endif %}
+    </span>
   </div>
+
+
   <div class="detail-row">
     <span class="label">TIN:</span>
     <span class="value">{{ doctor.tin }}</span>
@@ -56,7 +82,7 @@
   </div>
   <div class="detail-row">
     <span class="label">PRC Expiry Date:</span>
-    <span class="value">{{ doctor.prcexpdate|date:"M d, Y"|default:"—" }}</span>
+    <span class="value">{{ doctor.prcexpdate_display|default:"—" }}</span>
   </div>
   <div class="detail-row">
     <span class="label">PHIC No:</span>
@@ -64,7 +90,7 @@
   </div>
   <div class="detail-row">
     <span class="label">PHIC Expiry Date:</span>
-    <span class="value">{{ doctor.phicexpdate|date:"M d, Y"|default:"—" }}</span>
+    <span class="value">{{ doctor.phicexpdate_display|default:"—" }}</span>
   </div>
   <div class="detail-row">
     <span class="label">PMCC No:</span>

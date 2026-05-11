@@ -72,10 +72,10 @@ class Doctor(models.Model):
 
 
 class EmdDoctor(models.Model):
-    """
-    Read-only model for emddoctors table
-    """
+    """Read-only model for emddoctors table."""
     pk_emddoctors = models.IntegerField(primary_key=True)
+
+    # Existing columns
     doctors_name = models.CharField(max_length=255)
     smsplusmobileno = models.CharField(max_length=30, blank=True)
     tin = models.CharField(max_length=15, blank=True)
@@ -100,6 +100,17 @@ class EmdDoctor(models.Model):
     specialization = models.TextField(blank=True)
     specialize = models.CharField(max_length=30, blank=True, db_column='specialize')
     service_type = models.TextField(blank=True)
+
+    # NEW columns in your updated emddoctors DB
+    category = models.CharField(max_length=100, blank=True, null=True)
+    birthdate = models.DateField(null=True, blank=True)
+    email = models.EmailField(max_length=254, blank=True, null=True)
+    mobilephone = models.CharField(max_length=30, blank=True, null=True)
+    mobilephone2 = models.CharField(max_length=30, blank=True, null=True)
+    firstname = models.CharField(max_length=150, blank=True, null=True)
+    lastname = models.CharField(max_length=150, blank=True, null=True)
+    middlename = models.CharField(max_length=150, blank=True, null=True)
+
 
     class Meta:
         managed = False

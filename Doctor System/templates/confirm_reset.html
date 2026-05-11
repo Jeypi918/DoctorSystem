@@ -8,14 +8,15 @@
   <p>Reset password to <strong>{{ new_password }}</strong>?</p>
   
   <div class="detail-card">
-    <p><strong>Username:</strong> {{ new_password }}</p>
+    <p><strong>Username:</strong> {{ username }}</p>
     <p><strong>New Password:</strong> {{ new_password }}</p>
-    <p class="small">Email: {{ doctor.email }}</p>
+    <p class="small">Email: {{ doctor.email_doctors|default_if_none:''|default:'' }}</p>
   </div>
   
   <form method="post" style="display: inline;">
     {% csrf_token %}
-<button type="submit" class="bg-navy-500 hover:bg-navy-600 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">Yes, Reset Password</button>
+    <input type="hidden" name="confirm_reset" value="1">
+    <button type="submit" class="bg-navy-500 hover:bg-navy-600 text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-200 text-lg">Yes, Reset Password</button>
   </form>
   
   <a href="{% url 'doctor_detail' doctor.pk %}" class="bg-gray-200 hover:bg-gray-300 text-gray-900 px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-lg inline-block mt-4">Cancel</a>

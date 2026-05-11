@@ -20,7 +20,17 @@ class EmdDoctor(models.Model):
     pk_emddoctors = models.IntegerField(primary_key=True)
     doctors_name = models.CharField(max_length=255)
     smsplusmobileno = models.CharField('Mobile', max_length=30, blank=True)
+    mobilephone = models.CharField(max_length=30, blank=True, null=True)
+    mobilephone2 = models.CharField(max_length=30, blank=True, null=True)
+
     tin = models.CharField(max_length=15, blank=True)
+    email = models.EmailField(max_length=254, blank=True, null=True)
+
+
+    firstname = models.CharField(max_length=150, blank=True, null=True)
+    middlename = models.CharField(max_length=150, blank=True, null=True)
+    lastname = models.CharField(max_length=150, blank=True, null=True)
+
     active = models.BooleanField(default=True)
     prctype = models.CharField('PRC Type', max_length=10, blank=True)
     prcno = models.CharField(max_length=15, blank=True)
@@ -43,6 +53,22 @@ class EmdDoctor(models.Model):
     specialize = models.CharField(max_length=30, blank=True)
     service_type = models.TextField('Service Type', blank=True)
     category = models.CharField('Category', max_length=50, db_column='category', blank=True)
+    
+    # If your DB column is datetime (e.g. 1990-05-14 00:00:00), keep DateTimeField.
+    # If it still comes as blank, the DB column name is likely not exactly `birthdate`.
+    # Birthdate in DB is likely stored as DATE or DATETIME (but older data may be blank).
+    # DB column is stored like: 1997-05-14 00:00:00
+    # Use DateTimeField so Django can parse it correctly, then template will render date-only.
+    # Keep birthdate as datetime in Django; template will render date-only.
+    # Keep as DateField to avoid timezone/parsing errors with legacy DB values.
+    birthdate = models.DateField(null=True, blank=True)
+    
+    
+    
+    
+    
+    
+    
     
     # User relation - db_column='user_id' if legacy column exists, else None
     # user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='emd_doctor_profile', null=True, blank=True)
@@ -89,6 +115,56 @@ class EmdDoctor(models.Model):
     @property
     def ewtrate_pct(self):
         return f"{self.ewtrate}%"
+
+    @property
+    def birthdate_display(self):
+        if not self.birthdate:
+            return None
+
+        # Legacy DB/serializations may provide a string instead of a date object.
+        if isinstance(self.birthdate, str):
+            try:
+                # Handles common formats like: YYYY-MM-DD
+                return self.birthdate[:10]  # keep as YYYY-MM-DD if parsing fails later
+            except Exception:
+                return self.birthdate
+
+        try:
+            return self.birthdate.strftime('%B %d, %Y')  # e.g. "May 14, 1997"
+        except Exception:
+            return str(self.birthdate)
+
+    @property
+    def prcexpdate_display(self):
+        if not self.prcexpdate:
+            return None
+
+        if isinstance(self.prcexpdate, str):
+            try:
+                return self.prcexpdate[:10]
+            except Exception:
+                return self.prcexpdate
+
+        try:
+            return self.prcexpdate.strftime('%B %d, %Y')
+        except Exception:
+            return str(self.prcexpdate)
+
+    @property
+    def phicexpdate_display(self):
+        if not self.phicexpdate:
+            return None
+
+        if isinstance(self.phicexpdate, str):
+            try:
+                return self.phicexpdate[:10]
+            except Exception:
+                return self.phicexpdate
+
+        try:
+            return self.phicexpdate.strftime('%B %d, %Y')
+        except Exception:
+            return str(self.phicexpdate)
 
     class Meta:
         managed = False
