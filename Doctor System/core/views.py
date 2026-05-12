@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
@@ -379,7 +379,59 @@ def my_doctor_view(request):
     print(f"DEBUG: First 3 transactions doctors: {list(transactions.values('doctor')[:3])}")
     print(f"DEBUG: my_doctor = {my_doctor.doctors_name}")
 
-    patient_count = patients.count()
+    # Connected patients should also include names from report entries
+    released_report_patients = list(ReleasedCheck.objects.filter(
+        Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+    ).exclude(patientname__isnull=True).exclude(patientname__exact='').values('patientname', 'discharge_date'))
+    unreleased_report_patients = list(UnreleasedCheck.objects.filter(
+        payeename__icontains=my_doctor.doctors_name
+    ).exclude(patientname__isnull=True).exclude(patientname__exact='').values('patientname', 'discharge_date'))
+
+    report_patients_raw = released_report_patients + unreleased_report_patients
+    pf_patient_names = {f"{p.first_name} {p.last_name}".strip() for p in patients}
+    seen_report_patients = set()
+    report_patients = []
+
+    def initials_last_name(name):
+        if not name:
+            return ''
+        parts = name.strip().split()
+        if len(parts) == 1:
+            return parts[0]
+        first_initial = parts[0][0].upper() if parts[0] else ''
+        last_name = parts[-1]
+        return f"{first_initial}. {last_name}" if first_initial else last_name
+
+    for report in report_patients_raw:
+        patient_name = report['patientname'].strip()
+        if not patient_name or patient_name in pf_patient_names:
+            continue
+
+        discharge_date = report.get('discharge_date')
+        key = (patient_name, discharge_date)
+        if key in seen_report_patients:
+            continue
+        seen_report_patients.add(key)
+        report_patients.append({
+            'patient_name': patient_name,
+            'display_name': initials_last_name(patient_name),
+            'discharge_date': discharge_date,
+        })
+
+    def normalize_discharge_date(dt):
+        if not dt:
+            return date.min
+        if isinstance(dt, datetime):
+            return dt.date()
+        return dt
+
+    report_patients = sorted(
+        report_patients,
+        key=lambda r: normalize_discharge_date(r['discharge_date']),
+        reverse=True,
+    )
+
+    patient_count = len(pf_patient_names | {rp['patient_name'] for rp in report_patients})
     transaction_count = transactions.count()
 
     # Match home_view PF total logic for consistency
@@ -429,6 +481,7 @@ def my_doctor_view(request):
         'doctor': my_doctor,
         'transactions': transactions,
         'patients': patients,
+        'report_patients': report_patients,
         'soa_list': soa_list,
         'patient_count': patient_count,
         'transaction_count': transaction_count,

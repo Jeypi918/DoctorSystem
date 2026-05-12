@@ -223,19 +223,32 @@
         <i class="fa fa-users text-blue-500"></i>
         Connected Patients
       </h3>
-      {% if patients %}
-        <div class="space-y-3 max-h-96 overflow-y-auto">
-          {% for p in patients|slice:":12" %}
-            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all">
-              <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                <i class="fa fa-user text-blue-600 text-lg"></i>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-900 truncate">{{ p.first_name }} {{ p.last_name }}</p>
-                <p class="text-sm text-gray-600">{{ p.phone|default:"No phone" }}</p>
-              </div>
-            </div>
-          {% endfor %}
+      {% if patients or report_patients %}
+        <div class="table-responsive">
+          <table class="data-table w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th>Patient Name</th>
+                <th>Discharge Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in patients|slice:":12" %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="font-medium">
+                    {{ p.first_name|default_if_none:''|slice:":1" }}{% if p.first_name %}. {% endif %}{{ p.last_name }}
+                  </td>
+                  <td>—</td>
+                </tr>
+              {% endfor %}
+              {% for rp in report_patients|slice:":12" %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="font-medium">{{ rp.display_name }}</td>
+                  <td>{{ rp.discharge_date|date:"Y-m-d"|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       {% else %}
         <div class="text-center py-12">
