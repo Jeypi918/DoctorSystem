@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile
 
 class SignUpForm(UserCreationForm):
-    firstname = forms.CharField(max_length=150, label='First Name')
-    lastname = forms.CharField(max_length=150, label='Last Name')
+    first_name = forms.CharField(max_length=150, label='First Name')
+    last_name = forms.CharField(max_length=150, label='Last Name')
     email = forms.EmailField(max_length=254, help_text='Required. Enter a valid email address.')
     role = forms.ChoiceField(choices=UserProfile.ROLE_CHOICES, label='Role')
     specialty = forms.CharField(max_length=255, label='Specialty', required=False, widget=forms.TextInput(attrs={'class': 'form-input'}))
