@@ -121,19 +121,19 @@
   <div class="cards mb-8">
 
     <div class="card card-patients">
-      <div class="card-title">Patients</div>
+      <div class="card-title">Active Patients</div>
       <div class="card-value">{{ patient_count }}</div>
       <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
 
     <div class="card card-transactions">
-      <div class="card-title">Transactions</div>
+      <div class="card-title">Income Statements</div>
       <div class="card-value">{{ transaction_count|abbrev }}</div>
       <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
 
     <div class="card card-statements">
-      <div class="card-title">Statements</div>
+      <div class="card-title">PF Transaction</div>
       <div class="card-value">{{ statement_count }}</div>
       <a href="{% url 'statements' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
@@ -145,7 +145,7 @@
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <i class="fa fa-file-invoice text-blue-500"></i>
-        Recent PF Transactions
+        Recent Check Transactions
       </h3>
 
       {% if transactions %}
@@ -183,8 +183,7 @@
         <!-- <h4 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"> -->
           <!-- <i class="fa fa-file-alt text-emerald-500"></i> -->
           <!-- Recent PF Reports -->
-        </h4>
-
+        <!-- </h4> -->
         {% if recent_pf_reports %}
           <div class="table-responsive">
             <table class="data-table w-full">
@@ -223,6 +222,7 @@
         <i class="fa fa-users text-blue-500"></i>
         Connected Patients
       </h3>
+      <br>
       {% if patients or report_patients %}
         <div class="table-responsive">
           <table class="data-table w-full">
@@ -241,7 +241,7 @@
                   <td>—</td>
                 </tr>
               {% endfor %}
-              {% for rp in report_patients|slice:":12" %}
+              {% for rp in report_patients|slice:":10" %}
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="font-medium">{{ rp.display_name }}</td>
                   <td>{{ rp.discharge_date|date:"Y-m-d"|default:"—" }}</td>

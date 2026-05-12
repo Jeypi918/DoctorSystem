@@ -23,13 +23,13 @@
   </div>
 
   <div class="card card-transactions">
-    <div class="card-title">Transactions</div>
+    <div class="card-title">Income Statements</div>
     <div class="card-value">{{ transaction_count|abbrev }}</div>
     <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-statements">
-    <div class="card-title">Statements</div>
+    <div class="card-title">PF Transaction</div>
     <div class="card-value">{{ statement_count }}</div>
     <a href="{% url 'statements' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
