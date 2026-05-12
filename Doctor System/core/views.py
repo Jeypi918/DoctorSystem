@@ -397,6 +397,34 @@ def my_doctor_view(request):
 
     print(f"DEBUG: patient_count={patient_count}, transaction_count(PF total)={transaction_count}, statement_count={statement_count}")
 
+    # Recent PF reports from Released Check and Unreleased Checks for this doctor
+    released_pf_reports = ReleasedCheck.objects.filter(
+        Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+    ).order_by('-checkdate').values('checkno', 'checkdate')[:5]
+    unreleased_pf_reports = UnreleasedCheck.objects.filter(
+        payeename__icontains=my_doctor.doctors_name
+    ).order_by('-checkdate').values('checkno', 'checkdate')[:5]
+
+    recent_pf_reports = []
+    for report in released_pf_reports:
+        recent_pf_reports.append({
+            'checkno': report['checkno'],
+            'checkdate': report['checkdate'],
+            'report_type': 'Released Check',
+        })
+    for report in unreleased_pf_reports:
+        recent_pf_reports.append({
+            'checkno': report['checkno'],
+            'checkdate': report['checkdate'],
+            'report_type': 'Unreleased Check',
+        })
+
+    recent_pf_reports = sorted(
+        recent_pf_reports,
+        key=lambda r: r['checkdate'] or '',
+        reverse=True,
+    )
+
     return render(request, 'doctor_self.html', {
         'doctor': my_doctor,
         'transactions': transactions,
@@ -405,6 +433,7 @@ def my_doctor_view(request):
         'patient_count': patient_count,
         'transaction_count': transaction_count,
         'statement_count': statement_count,
+        'recent_pf_reports': recent_pf_reports,
     })
 
 # ===== PATIENT VIEWS =====

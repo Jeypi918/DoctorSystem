@@ -147,6 +147,7 @@
         <i class="fa fa-file-invoice text-blue-500"></i>
         Recent PF Transactions
       </h3>
+
       {% if transactions %}
         <div class="table-responsive">
           <table class="data-table w-full">
@@ -171,12 +172,50 @@
           </table>
         </div>
       {% else %}
-        <div class="text-center py-12">
-          <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i>
+        <!-- <div class="text-center py-12">
+          <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i> -->
           <!-- <p class="text-xl text-gray-500">No transactions yet</p> -->
-        </div>
+        <!-- </div> -->
       {% endif %}
+
+      <!-- Recent PF (Reports) -->
+      <div class="mt-10">
+        <!-- <h4 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"> -->
+          <!-- <i class="fa fa-file-alt text-emerald-500"></i> -->
+          <!-- Recent PF Reports -->
+        </h4>
+
+        {% if recent_pf_reports %}
+          <div class="table-responsive">
+            <table class="data-table w-full">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th>Check No</th>
+                  <th>Check Date</th>
+                  <th>Report Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in recent_pf_reports %}
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="font-medium">{{ r.checkno }}</td>
+                    <td>{{ r.checkdate|date:'Y-m-d' }}</td>
+
+                    <td>{{ r.report_type }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-10">
+            <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i>
+            <!-- <p class="text-xl text-gray-500">No PF reports yet</p> -->
+          </div>
+        {% endif %}
+      </div>
     </div>
+
 
     <!-- Patients Section -->
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
