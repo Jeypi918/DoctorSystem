@@ -159,16 +159,27 @@ def home_view(request):
     transaction_count = pf_total
     statement_count = StatementOfAccount.objects.count()
 
-    # Compute welcome display for doctors - Proper case: Dr. Lastname
+    # Compute welcome display for doctors - Proper case: Dr. Initial Lastname
     try:
         if hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'doctor' and my_doctor:
-            # Title case lastname: DR.BARTOLO -> Bartolo
-            lastname_proper = my_doctor.last_name.strip().title()
-            welcome_display = f"Dr. {lastname_proper}"
+            first_name = (getattr(my_doctor, 'first_name', '') or '').strip()
+            last_name = (getattr(my_doctor, 'last_name', '') or '').strip()
+
+            initial = first_name[0].upper() if first_name else ''
+            lastname_proper = last_name.title() if last_name else ''
+
+            
+            if initial and lastname_proper:
+                welcome_display = f"Dr. {initial}. {lastname_proper} "
+            elif lastname_proper:
+                welcome_display = f"Dr. {lastname_proper}"
+            else:
+                welcome_display = request.user.username
         else:
             welcome_display = request.user.username
     except AttributeError:
         welcome_display = request.user.username
+
 
     return render(request, 'home.html', {
         'doctor_count': doctor_count,
