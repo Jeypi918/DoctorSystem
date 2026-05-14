@@ -145,7 +145,7 @@
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <i class="fa fa-file-invoice text-blue-500"></i>
-        Recent Check Transactions
+        Recent Income Statements
       </h3>
 
       {% if transactions %}
@@ -198,7 +198,7 @@
                 {% for r in recent_pf_reports %}
                   <tr class="hover:bg-gray-50 transition-colors">
                     <td class="font-medium">{{ r.checkno }}</td>
-                    <td>{{ r.checkdate|date:'Y-m-d' }}</td>
+                    <td>{{ r.checkdate|date:"m/d/Y"|default:"—" }}</td>
 
                     <td>{{ r.report_type }}</td>
                   </tr>
@@ -236,7 +236,7 @@
               {% for p in patients|slice:":12" %}
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="font-medium">
-                    {{ p.first_name|default_if_none:''|slice:":1" }}{% if p.first_name %}. {% endif %}{{ p.last_name }}
+                    {{ p.last_name }}{% if p.first_name %}, {{ p.first_name|slice:":1" }}.{% endif %}
                   </td>
                   <td>—</td>
                 </tr>
@@ -244,7 +244,7 @@
               {% for rp in report_patients|slice:":10" %}
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="font-medium">{{ rp.display_name }}</td>
-                  <td>{{ rp.discharge_date|date:"Y-m-d"|default:"—" }}</td>
+                  <td>{{ rp.discharge_date|date:"m/d/Y"|default:"—" }}</td>
                 </tr>
               {% endfor %}
             </tbody>

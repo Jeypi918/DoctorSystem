@@ -64,11 +64,12 @@ def logout_view(request):
 def get_current_doctor(request):
     """Resolve the logged-in doctor profile from the doctor username.
 
-    Username format after reset:
-      LASTNAME(uppercase, portion before comma) + MM + YY
-      Example: "BARTOLO" + (prcexpdate=2028-12-30) => "BARTOLO123028".
+    Recent reset scheme uses a linked doctorsid and username like:
+      LASTNAME + FIRSTINITIAL (Title case last name, uppercase initial)
+      Example: "AbbariaoA".
 
-    Keeps a legacy fallback to LASTNAME + pk_emddoctors if MMYY cannot be parsed.
+    Legacy parsing still supports older username formats such as:
+      LASTNAME + MMYY or LASTNAME + pk_emddoctors.
     """
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
         print(f"get_current_doctor: Role check failed for {request.user.username}")
@@ -80,48 +81,86 @@ def get_current_doctor(request):
         return None
 
     # Prefer a direct user-to-doctor link when available.
-    linked_doctor = EmdDoctor.objects.filter(doctorsid=request.user.id, active=True).first()
-    if linked_doctor:
-        return linked_doctor
-
+    linked_doctors = list(EmdDoctor.objects.filter(doctorsid=request.user.id, active=True))
     import re
-    m = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
-    if not m:
-        return EmdDoctor.objects.filter(active=True).first()
 
-    prefix = m.group('prefix').strip().upper()
-    digits = m.group('digits')
+    def username_matches_doctor(username, doctor):
+        m2 = re.match(r'^(?P<lastname>[A-Za-z]+)(?P<initial>[A-Z])?$', username)
+        if not m2:
+            return False
+        username_lastname = m2.group('lastname').lower()
+        username_initial = m2.group('initial')
+        doctor_lastname = (doctor.last_name or '').strip().lower()
+        if doctor_lastname != username_lastname:
+            return False
+        if username_initial:
+            doctor_first_initial = ((doctor.first_name or '').strip()[:1] or '').upper()
+            return doctor_first_initial == username_initial
+        return True
 
-    # First try: interpret trailing digits as MMYY (use last 4 digits)
-    mm_yy = digits[-4:]
-    try:
-        month = int(mm_yy[:2])
-        year2 = int(mm_yy[2:])
-    except ValueError:
-        month = None
-        year2 = None
-
-    if month and 1 <= month <= 12:
-        candidates = EmdDoctor.objects.filter(active=True, prcexpdate__isnull=False, prcexpdate__month=month)
-        # year%100 match in python
-        candidates = [d for d in candidates if d.prcexpdate and (d.prcexpdate.year % 100) == year2]
-
-        for d in candidates:
-            name = (d.doctors_name or '').strip()
-            last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
-            if last_token == prefix:
+    if linked_doctors:
+        for d in linked_doctors:
+            if username_matches_doctor(username, d):
                 return d
 
-    # Legacy fallback: LASTNAME + pk_emddoctors (original scheme)
-    # If digits is long enough, parse as pk.
-    try:
-        doctor_pk = int(digits)
-        candidates = EmdDoctor.objects.filter(active=True, pk_emddoctors=doctor_pk)
-        for cand in candidates:
-            if prefix.lower() in cand.doctors_name.lower():
-                return cand
-    except ValueError:
-        pass
+        if len(linked_doctors) == 1:
+            print(f"get_current_doctor: linked doctor mismatch for {username}, falling back to username-based lookup")
+        else:
+            print(f"get_current_doctor: duplicate doctorsid found for {username}, but no linked doctor matched username; falling back to general lookup")
+
+    m = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
+    if m:
+        prefix = m.group('prefix').strip().upper()
+        digits = m.group('digits')
+
+        # First try: interpret trailing digits as MMYY (use last 4 digits)
+        mm_yy = digits[-4:]
+        try:
+            month = int(mm_yy[:2])
+            year2 = int(mm_yy[2:])
+        except ValueError:
+            month = None
+            year2 = None
+
+        if month and 1 <= month <= 12:
+            candidates = EmdDoctor.objects.filter(active=True, prcexpdate__isnull=False, prcexpdate__month=month)
+            candidates = [d for d in candidates if d.prcexpdate and (d.prcexpdate.year % 100) == year2]
+
+            for d in candidates:
+                name = (d.doctors_name or '').strip()
+                last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
+                if last_token == prefix:
+                    return d
+
+        # Legacy fallback: LASTNAME + pk_emddoctors (original scheme)
+        try:
+            doctor_pk = int(digits)
+            candidates = EmdDoctor.objects.filter(active=True, pk_emddoctors=doctor_pk)
+            for cand in candidates:
+                if prefix.lower() in cand.doctors_name.lower():
+                    return cand
+        except ValueError:
+            pass
+
+    # New username format without trailing digits: LASTNAME + FIRSTINITIAL
+    username_match = re.match(r'^(?P<lastname>[A-Za-z]+)(?P<initial>[A-Z])$', username)
+    if username_match:
+        username_lastname = username_match.group('lastname').strip().lower()
+        username_initial = username_match.group('initial')
+        candidates = EmdDoctor.objects.filter(active=True)
+        for d in candidates:
+            doctor_lastname = (d.last_name or '').strip().lower()
+            doctor_first_initial = ((d.first_name or '').strip()[:1] or '').upper()
+            if doctor_lastname == username_lastname and doctor_first_initial == username_initial:
+                return d
+
+    # Fallback: match lastname only if possible
+    username_lastname_only = re.match(r'^(?P<lastname>[A-Za-z]+)$', username)
+    if username_lastname_only:
+        username_lastname = username_lastname_only.group('lastname').strip().lower()
+        candidate = EmdDoctor.objects.filter(active=True).filter(doctors_name__istartswith=username_lastname).first()
+        if candidate:
+            return candidate
 
     # Final fallback
     fallback = EmdDoctor.objects.filter(active=True).first()
@@ -234,42 +273,43 @@ def doctor_detail_view(request, pk):
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
 
-    # New reset scheme (based on PRC expiry date):
-    #   username/password seed: LASTNAME + MM + YY (year reduced to last 2 digits)
-    #   Example: "BARTOLO, ..." + prcexpdate=2028-12-30 => BARTOLO123028
-
+    # New reset scheme:
+    #   username seed: LASTNAME + FIRSTINITIAL (Title case last name, uppercase initial)
+    #   password seed: LASTNAME + birthdate MMYY
+    #   Example: "Abbariao, Anne" + birthdate=1999-05-14 => username=AbbariaoA password=Abbariao0599
 
     if not doctor.prcno:
         return render(request, 'confirm_reset.html', {
             'doctor': doctor, 'error': 'PRC No required for reset.'
         })
 
-    # Expect doctors_name like: "LASTNAME, FIRSTNAME MIDDLE ..."
-    # Extract tokens to build username.
-    name = (doctor.doctors_name or '').strip()
-    if ',' in name:
-        lastname_token = name.split(',', 1)[0].strip()
-        firstpart = name.split(',', 1)[1].strip()
-    else:
-        # fallback: treat last word as lastname, first word as firstname
-        parts = name.split()
-        lastname_token = parts[-1] if parts else 'Doctor'
-        firstpart = ' '.join(parts[:-1]) if len(parts) > 1 else ''
+    lastname_token = (doctor.last_name or '').strip()
+    firstname_token = (doctor.first_name or '').strip()
+    lastname_title = lastname_token.title() if lastname_token else 'Doctor'
+    first_initial = firstname_token[:1].upper() if firstname_token else ''
 
-    lastname_title = lastname_token.strip().title() if lastname_token else 'Doctor'
-    first_tokens = [t for t in firstpart.split() if t]
-    firstname_concat = ''.join(first_tokens)  # no spaces
+    birthdate = None
+    if doctor.birthdate:
+        if isinstance(doctor.birthdate, str):
+            for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%m/%d/%Y', '%d/%m/%Y'):
+                try:
+                    birthdate = datetime.strptime(doctor.birthdate.strip(), fmt).date()
+                    break
+                except ValueError:
+                    continue
+        elif isinstance(doctor.birthdate, datetime):
+            birthdate = doctor.birthdate.date()
+        else:
+            birthdate = doctor.birthdate
 
-    if doctor.prcexpdate:
-        # Password seed uses PRC expiry date:
-        #   suffix = MM + YY (year reduced to last 2 digits)
-        suffix = f"{doctor.prcexpdate.month:02d}{doctor.prcexpdate.year % 100:02d}"
+    if birthdate:
+        suffix = f"{birthdate.month:02d}{birthdate.year % 100:02d}"
         password = f"{lastname_title}{suffix}"
     else:
-        # If PRC expiry missing, keep legacy scheme to avoid breaking resets.
+        # If birthdate is missing or invalid, keep legacy fallback to avoid breaking resets.
         password = f"{lastname_title}{doctor.pk_emddoctors}"
 
-    username = f"{lastname_token.strip()}{firstname_concat}".lower()
+    username = f"{lastname_title}{first_initial}"
 
     # Get or create User
     user, created = User.objects.get_or_create(
@@ -395,12 +435,24 @@ def my_doctor_view(request):
     def initials_last_name(name):
         if not name:
             return ''
-        parts = name.strip().split()
+
+        normalized_name = name.strip()
+        if ',' in normalized_name:
+            last_name, first_parts = normalized_name.split(',', 1)
+            last_name = last_name.strip()
+            initials = []
+            for part in first_parts.replace('.', ' ').split():
+                if part:
+                    initials.append(f"{part[0].upper()}.")
+            return f"{last_name}, {' '.join(initials)}" if initials else last_name
+
+        parts = normalized_name.split()
         if len(parts) == 1:
             return parts[0]
-        first_initial = parts[0][0].upper() if parts[0] else ''
+
         last_name = parts[-1]
-        return f"{first_initial}. {last_name}" if first_initial else last_name
+        initials = [f"{part[0].upper()}." for part in parts[:-1] if part]
+        return f"{last_name}, {' '.join(initials)}" if initials else last_name
 
     for report in report_patients_raw:
         patient_name = report['patientname'].strip()
