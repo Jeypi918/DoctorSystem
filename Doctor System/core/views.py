@@ -562,7 +562,44 @@ class PatientListView(ListView):
         if doctor:
             # Filter patients by doctor's code (assuming doctors_code is string of pk_emddoctors)
             queryset = queryset.filter(doctors_code=str(doctor.pk_emddoctors))
+
+        q = self.request.GET.get('q', '').strip()
+        date_from = self.request.GET.get('date_from', '').strip()
+        date_to = self.request.GET.get('date_to', '').strip()
+        patient_type = self.request.GET.get('patient_type', 'All').strip()
+
+        if q:
+            queryset = queryset.filter(
+                Q(patient_name__icontains=q) |
+                Q(patient_id__icontains=q) |
+                Q(gender__icontains=q) |
+                Q(doctor_name__icontains=q) |
+                Q(doctors_code__icontains=q) |
+                Q(citizenship__icontains=q) |
+                Q(roomno__icontains=q) |
+                Q(guarantors__icontains=q)
+            )
+
+        # Date filters apply to ADMISSION DateTime (registry_datetime)
+        if date_from:
+            queryset = queryset.filter(registry_datetime__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(registry_datetime__date__lte=date_to)
+
+        if patient_type and patient_type.lower() != 'all':
+            queryset = queryset.filter(patient_type__iexact=patient_type)
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query_params = self.request.GET.copy()
+        query_params.pop('page', None)
+        context['query_params'] = query_params.urlencode()
+        context['patient_type_choices'] = ['All', 'Inpatient', 'Outpatient', 'Emergency']
+        return context
+
+
 
 
 @login_required(login_url='login')
