@@ -182,6 +182,52 @@ class Patient(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+
+# ===== Legacy: patientlist (doctor_system_db) =====
+# Provides the data for the Patients Management table.
+# NOTE: Field names are guesses based on your requested columns.
+# If your actual column names differ, adjust the `db_column` values.
+class Patientlist(models.Model):
+# Legacy table primary key may not be named `id`; adjust if needed.
+    patient_id = models.AutoField(primary_key=True, db_column='ID')
+
+    # Legacy column names can differ; adjust if needed.
+    registry_datetime = models.DateTimeField(db_column='Registry DateTime', null=True, blank=True)
+
+    # Store raw name from legacy table
+    patient_name = models.CharField(max_length=255, db_column='PatientName', blank=True, default='')
+
+    # Output-only name for UI: LastName + First Name Initials only
+    @property
+    def patient_display_name(self):
+        name = self.patient_name.strip()
+        if ',' in name:
+            parts = name.split(',', 1)
+            last = parts[0].strip()
+            first_part = parts[1].strip()
+            if first_part:
+                first_words = first_part.split()
+                initials = ''.join(word[0].upper() + '.' for word in first_words if word)
+                return f"{last} {initials}".strip()
+            return last
+        return name
+
+    birthdate = models.DateField(db_column='Birthdate', null=True, blank=True)
+    gender = models.CharField(max_length=20, db_column='Gender', blank=True, default='—')
+
+    # Additional fields from database
+    doctors_code = models.CharField(max_length=50, db_column='Doctors Code', blank=True, default='')
+    doctor_name = models.CharField(max_length=255, db_column='DoctorName', blank=True, default='')
+    citizenship = models.CharField(max_length=50, db_column='Citizenship', blank=True, default='')
+    patient_type = models.CharField(max_length=50, db_column='Patient Type', blank=True, default='')
+    roomno = models.CharField(max_length=50, db_column='Roomno', blank=True, default='')
+    guarantors = models.CharField(max_length=255, db_column='Guarantors', blank=True, default='')
+
+    class Meta:
+        managed = False
+        db_table = 'patientlist'
+
+
 class PFTransaction(models.Model):
     doctor = models.ForeignKey(EmdDoctor, on_delete=models.CASCADE, related_name='transactions')
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)

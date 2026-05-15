@@ -10,7 +10,8 @@ from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.db.models import Q
 from django.db import IntegrityError, connection
-from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable, APV, CheckReport
+from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable, APV, CheckReport, Patientlist
+
 from .forms import SignUpForm, EmdDoctorForm, PatientForm, PFTransactionForm, StatementOfAccountForm
 from .decorators import admin_required, doctor_required, billing_required, accounting_required
 
@@ -543,14 +544,23 @@ def my_doctor_view(request):
 
 # ===== PATIENT VIEWS =====
 class PatientListView(ListView):
-    model = Patient
+    model = Patientlist
     template_name = 'patients_list.html'
     context_object_name = 'patients'
     paginate_by = 10
 
-    @method_decorator(login_required(login_url='login'))
+    @method_decorator(doctor_required)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        doctor = get_current_doctor(self.request)
+        if doctor:
+            # Filter patients by doctor's code (assuming doctors_code is string of pk_emddoctors)
+            queryset = queryset.filter(doctors_code=str(doctor.pk_emddoctors))
+        return queryset
+
 
 @login_required(login_url='login')
 @staff_required

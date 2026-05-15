@@ -1,49 +1,96 @@
 {% extends 'base.html' %}
+{% load format_tags %}
 {% block content %}
-<div class="page-header">
-  <h1>Patients Management</h1>
-  <a href="{% url 'patient_add' %}" class="btn-primary">+ Add Patient</a>
-</div>
-
-{% if patients %}
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Date of Birth</th>
-          <th>Phone</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for patient in patients %}
-          <tr>
-            <td><a href="{% url 'patient_detail' patient.pk %}">{{ patient.first_name }} {{ patient.last_name }}</a></td>
-            <td>{{ patient.dob }}</td>
-            <td>{{ patient.phone }}</td>
-            <td class="actions">
-              <a href="{% url 'patient_edit' patient.pk %}" class="btn-edit">Edit</a>
-              <a href="{% url 'patient_delete' patient.pk %}" class="btn-delete">Delete</a>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="max-w-none mx-auto px-4 py-8 lg:px-2">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Patients Management</h1>
+    <a href="{% url 'patient_add' %}" class="inline-flex items-center px-6 py-3 bg-navy-500 text-white font-semibold rounded-lg hover:bg-navy-600 transition-colors duration-200 shadow-lg">
+      <i class="fas fa-plus mr-2"></i>Add Patient
+    </a>
   </div>
 
-  {% if is_paginated %}
-  <div class="mt-8 w-full px-4">
-    <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
-      <nav class="flex space-x-1 min-w-max">
-        {% if page_obj.has_previous %}<a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">« First</a> | {% endif %}
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}<strong>{{ num }}</strong>{% else %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
-      {% endfor %}
-      {% if page_obj.has_next %} | <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>{% endif %}
+  {% if patients %}
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
+            <tr>
+              
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Registry DateTime</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">ID</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Birthdate</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Gender</th>
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Code</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Name</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Citizenship</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Type</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Room No</th> -->
+              <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Guarantors</th> -->
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for patient in patients %}
+              <tr class="hover:bg-gray-50 transition-all duration-200">
+                
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.registry_datetime|date:"m/d/Y H:i"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.patient_id }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.patient_display_name }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.birthdate|date:"m/d/Y"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.gender|default:"—" }}</td>
+                <!-- <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.doctors_code|default:"—" }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ patient.doctor_name }}">{{ patient.doctor_name|default:"—" |truncatechars:40 }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.citizenship|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.patient_type|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.roomno|default:"—" }}</td>
+                <td class="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title="{{ patient.guarantors }}">{{ patient.guarantors|default:"—" |truncatechars:40 }}</td> -->
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-8 w-full px-4">
+        <div class="flex justify-center overflow-x-auto pb-2 mx-auto max-w-full">
+          <nav class="flex space-x-1 min-w-max">
+          {% if page_obj.has_previous %}
+            <a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">First</a>
+          {% endif %}
+{% with page_range=page_obj.paginator.page_range current=page_obj.number total=page_obj.paginator.num_pages %}
+              {% if current > 5 %}
+            <a href="?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">1</a>
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% for num in page_range %}
+                {% if num >= current|add:"-5" and num <= current|add:"5" %}
+                  {% if num == current %}
+                    <span class="px-4 py-2 bg-navy-500 text-white rounded-lg font-bold shadow">{{ num }}</span>
+                  {% else %}
+            <a href="?page={{ num }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors">{{ num }}</a>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {% if current < total|add:"-5" %}
+                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">...</span>
+              {% endif %}
+              {% if current < total|add:"-5" and total > 1 %}
+            <a href="?page={{ total }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">{{ total }}</a>
+              {% endif %}
+            {% endwith %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Last</a>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-2xl shadow-lg">
+      <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+      <p class="text-xl text-gray-500 mb-4">No patients found.</p>
     </div>
   {% endif %}
-{% else %}
-  <p class="no-data">No patients yet. <a href="{% url 'patient_add' %}">Add the first patient</a></p>
-{% endif %}
+</div>
 {% endblock %}
+
