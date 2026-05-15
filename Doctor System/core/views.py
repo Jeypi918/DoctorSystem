@@ -557,8 +557,10 @@ class PatientListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('registry_datetime')
+
         doctor = get_current_doctor(self.request)
+
         if doctor:
             # Filter patients by doctor's code (assuming doctors_code is string of pk_emddoctors)
             queryset = queryset.filter(doctors_code=str(doctor.pk_emddoctors))
@@ -684,9 +686,11 @@ class ReleasedCheckListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('-checkdate', 'checkno')
+        queryset = super().get_queryset().order_by('releasedate', 'checkno')
+
         
         my_doctor = get_current_doctor(self.request)
+
         if my_doctor:
             queryset = queryset.filter(
                 Q(payee__icontains=my_doctor.doctors_name) | 
@@ -738,7 +742,8 @@ class UnreleasedCheckListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('-checkdate', 'checkno')
+        queryset = super().get_queryset().order_by('checkdate', 'checkno')
+
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
@@ -795,7 +800,8 @@ class OutstandingReportListView(ListView):
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('-duedate', 'docno')
+        queryset = super().get_queryset().order_by('docdate', 'docno')
+
         
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
