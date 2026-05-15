@@ -193,7 +193,7 @@ class Patientlist(models.Model):
 
     # Legacy column names can differ; adjust if needed.
     registry_datetime = models.DateTimeField(db_column='Registry DateTime', null=True, blank=True)
-
+    discharge_datetime = models.DateTimeField(db_column='Discharge DateTime', null=True, blank=True)
     # Store raw name from legacy table
     patient_name = models.CharField(max_length=255, db_column='PatientName', blank=True, default='')
 

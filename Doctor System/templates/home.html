@@ -17,8 +17,8 @@
 
 
   <div class="card card-patients">
-    <div class="card-title">Active Patients</div>
-    <div class="card-value">{{ patient_count }}</div>
+    <div class="card-title">List of Patients</div>
+    <div class="card-value">{{ patient_count|abbrev }}</div>
     <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 

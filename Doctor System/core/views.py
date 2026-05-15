@@ -175,7 +175,10 @@ def home_view(request):
     my_doctor = get_current_doctor(request)
     
     doctor_count = EmdDoctor.objects.count()
-    patient_count = Patient.objects.count()
+    if my_doctor:
+        patient_count = Patientlist.objects.filter(doctors_code=str(my_doctor.pk_emddoctors)).count()
+    else:
+        patient_count = Patientlist.objects.count()
     
     if my_doctor:
         released_count = ReleasedCheck.objects.filter(
@@ -484,7 +487,7 @@ def my_doctor_view(request):
         reverse=True,
     )
 
-    patient_count = len(pf_patient_names | {rp['patient_name'] for rp in report_patients})
+    patient_count = Patientlist.objects.filter(doctors_code=str(my_doctor.pk_emddoctors)).count()
     transaction_count = transactions.count()
 
     # Match home_view PF total logic for consistency

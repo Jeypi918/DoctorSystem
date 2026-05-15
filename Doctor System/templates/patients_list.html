@@ -16,11 +16,17 @@
           <thead class="bg-gradient-to-r from-navy-500 to-navy-600">
             <tr>
               
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Registry DateTime</th>
-              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">ID</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Admission DateTime</th>
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Discharge DateTime</th>
+              {% if request.user.userprofile.role != 'doctor' %}
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Code</th> 
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Name</th>
+              {% endif %}
+              <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient ID</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Patient Name</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Birthdate</th>
               <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Gender</th>
+
               <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Code</th> -->
               <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Doctor Name</th> -->
               <!-- <th class="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Citizenship</th> -->
@@ -34,6 +40,11 @@
               <tr class="hover:bg-gray-50 transition-all duration-200">
                 
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.registry_datetime|date:"m/d/Y H:i"|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.discharge_datetime|date:"m/d/Y H:i"|default:"—" }}</td>
+                {% if request.user.userprofile.role != 'doctor' %}
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.doctors_code|default:"—" }}</td>
+                <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.doctor_name|default:"—" }}</td>
+                {% endif %}
                 <td class="px-4 py-4 text-center whitespace-nowrap font-semibold text-gray-900">{{ patient.patient_id }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.patient_display_name }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.birthdate|date:"m/d/Y"|default:"—" }}</td>
