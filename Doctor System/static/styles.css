@@ -214,7 +214,7 @@ body {
   transform: scale(1.05);
 }
 
-/* Sidebar Backdrop -->
+/* Sidebar Backdrop */
 .sidebar-backdrop {
   display: none;
   position: fixed;
@@ -288,6 +288,148 @@ body {
   margin-bottom: 1.5rem;
   color: var(--text);
   font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.detail-card {
+  background: linear-gradient(180deg, rgba(237, 243, 255, 0.96), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(29, 53, 130, 0.16);
+  box-shadow: 0 25px 45px rgba(29, 53, 130, 0.16);
+  border-radius: 24px;
+  padding: 2rem;
+  display: grid;
+  gap: 1.75rem;
+}
+
+.detail-card-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(29, 53, 130, 0.08);
+  padding-bottom: 1.5rem;
+}
+
+.detail-card-headline {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.detail-card-avatar {
+  min-width: 72px;
+  min-height: 72px;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--primary-navy), var(--metro-blue));
+  color: #ffffff;
+  font-size: 1.75rem;
+  box-shadow: 0 10px 30px rgba(29, 53, 130, 0.18);
+}
+
+.detail-card-eyebrow {
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+  color: var(--primary-navy);
+  opacity: 0.8;
+}
+
+.detail-card-subtitle {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.detail-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-navy);
+  background: rgba(0, 102, 161, 0.08);
+  border: 1px solid rgba(0, 102, 161, 0.16);
+}
+
+.status-pill-active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.24);
+  color: #0f766e;
+}
+
+.status-pill-inactive {
+  background: rgba(220, 53, 69, 0.09);
+  border-color: rgba(220, 53, 69, 0.18);
+  color: #c92a2a;
+}
+
+.detail-card-group {
+  display: grid;
+  gap: 1rem;
+}
+
+.group-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary-navy);
+}
+
+.detail-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: #f8fbff;
+  border: 1px solid rgba(226, 232, 240, 1);
+}
+
+.detail-row .label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-row .value {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .detail-card-overview {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-card-meta {
+    justify-content: flex-start;
+  }
 }
 
 /* ===== 4. DASHBOARD CARDS ===== */

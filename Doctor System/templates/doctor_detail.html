@@ -9,114 +9,124 @@
   </div>
 </div>
 
-<div class="detail-card">
-  <div class="detail-row">
-    <span class="label">Full Name:</span>
-    <span class="value">{{ doctor.doctors_name }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">First Name:</span>
-    <span class="value">{{ doctor.firstname }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Middle Name:</span>
-    <span class="value">{{ doctor.middlename }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Last Name:</span>
-    <span class="value">{{ doctor.lastname }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Birthdate</span>
-    <span class="value">{{ doctor.birthdate_display|default:"—" }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Email:</span>
-    <span class="value">{{ doctor.email }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Mobile:</span>
-    <span class="value">
-      {% if doctor.mobilephone %}
-        {{ doctor.mobilephone }}
-      {% elif doctor.mobilephone2 %}
-        {{ doctor.mobilephone2 }}
+<div class="detail-card" style="background: linear-gradient(180deg, rgba(237, 243, 255, 0.96), rgba(255, 255, 255, 0.96)); border: 1px solid rgba(29, 53, 130, 0.16); box-shadow: 0 25px 45px rgba(29, 53, 130, 0.16);">
+  <div class="detail-card-overview">
+    <div class="detail-card-headline">
+      <div class="detail-card-avatar">
+        <i class="fa fa-user-md"></i>
+      </div>
+      <div>
+        <p class="detail-card-eyebrow">Doctor Profile</p>
+        <h2>{{ doctor.doctors_name }}</h2>
+        <p class="detail-card-subtitle">{{ doctor.specialization|default:"General" }} • {{ doctor.category|default:"Unassigned" }}</p>
+      </div>
+    </div>
+    <div class="detail-card-meta">
+      {% if doctor.is_active_consultant %}
+        <span class="status-pill status-pill-active">Active Consultant</span>
       {% else %}
-        {{ doctor.smsplusmobileno }}
+        <span class="status-pill status-pill-inactive">Inactive Consultant</span>
       {% endif %}
-    </span>
+      <span class="status-pill">MD ID: {{ doctor.pk_emddoctors|default:"—" }}</span>
+    </div>
   </div>
 
+  <div class="detail-card-group">
+    <div class="group-heading">Contact Information</div>
+    <div class="detail-card-grid">
+      <div class="detail-row">
+        <span class="label">Email</span>
+        <span class="value">{{ doctor.email|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Mobile</span>
+        <span class="value">
+          {% if doctor.mobilephone %}
+            {{ doctor.mobilephone }}
+          {% elif doctor.mobilephone2 %}
+            {{ doctor.mobilephone2 }}
+          {% else %}
+            {{ doctor.smsplusmobileno|default:"—" }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Birthdate</span>
+        <span class="value">{{ doctor.birthdate_display|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">TIN</span>
+        <span class="value">{{ doctor.tin|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Bank Account Name</span>
+        <span class="value">{{ doctor.bankacctname|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Bank Account No</span>
+        <span class="value">{{ doctor.bankacctno|default:"—" }}</span>
+      </div>
+    </div>
+  </div>
 
-  <div class="detail-row">
-    <span class="label">TIN:</span>
-    <span class="value">{{ doctor.tin }}</span>
+  <div class="detail-card-group">
+    <div class="group-heading">Professional Credentials</div>
+    <div class="detail-card-grid">
+      <div class="detail-row">
+        <span class="label">First Name</span>
+        <span class="value">{{ doctor.firstname|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Middle Name</span>
+        <span class="value">{{ doctor.middlename|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Last Name</span>
+        <span class="value">{{ doctor.lastname|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Class Code</span>
+        <span class="value">{{ doctor.classcode|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PRC License Type</span>
+        <span class="value">{{ doctor.prctype|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PRC License No</span>
+        <span class="value">{{ doctor.prcno|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PRC Expiry Date</span>
+        <span class="value">{{ doctor.prcexpdate_display|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PHIC No</span>
+        <span class="value">{{ doctor.phicno|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PHIC Expiry Date</span>
+        <span class="value">{{ doctor.phicexpdate_display|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PMCC No</span>
+        <span class="value">{{ doctor.pmccno|default:"—" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">EWT Rate</span>
+        <span class="value">{{ doctor.ewtrate_pct|default:"—" }}</span>
+      </div>
+      {% if doctor.pk_emdoctors %}
+      <div class="detail-row">
+        <span class="label">EMD ID</span>
+        <span class="value">{{ doctor.pk_emdoctors }}</span>
+      </div>
+      {% endif %}
+    </div>
   </div>
-  <div class="detail-row">
-    <span class="label">Specialization:</span>
-    <span class="value">{{ doctor.specialization }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Category:</span>
-    <span class="value">{{ doctor.category}}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Active Consultant:</span>
-    <span class="value">{{ doctor.is_active_consultant }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">MD ID:</span>
-    <span class="value">{{ doctor.pk_emddoctors }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Class Code:</span>
-    <span class="value">{{ doctor.classcode|default:"—" }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PRC License Type:</span>
-    <span class="value">{{ doctor.prctype|default:"—" }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PRC License No:</span>
-    <span class="value">{{ doctor.prcno }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PRC Expiry Date:</span>
-    <span class="value">{{ doctor.prcexpdate_display|default:"—" }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PHIC No:</span>
-    <span class="value">{{ doctor.phicno }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PHIC Expiry Date:</span>
-    <span class="value">{{ doctor.phicexpdate_display|default:"—" }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">PMCC No:</span>
-    <span class="value">{{ doctor.pmccno }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Bank Account Name:</span>
-    <span class="value">{{ doctor.bankacctname }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">Bank Account No:</span>
-    <span class="value">{{ doctor.bankacctno }}</span>
-  </div>
-  <div class="detail-row">
-    <span class="label">EWT Rate:</span>
-    <span class="value">{{ doctor.ewtrate_pct }}</span>
-  </div>
-  {% if doctor.pk_emdoctors %}
-  <div class="detail-row">
-    <span class="label">MD ID:</span>
-    <span class="value">{{ doctor.pk_emdoctors }}</span>
-  </div>
-  {% endif %}
 </div>
 
-<h2>Professional Fee Transactions</h2>
+<!-- <h2>Professional Fee Transactions</h2> -->
 {% if transactions %}
   <div class="table-responsive">
     <table class="data-table">
@@ -141,7 +151,7 @@
     </table>
   </div>
 {% else %}
-  <p>No transactions for this doctor.</p>
+  <!-- <p>No transactions for this doctor.</p> -->
 {% endif %}
 
 <div class="back-link">
