@@ -1,12 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
+
 <div class="page-header">
-  <h1>Dr. {{ doctor.doctors_name }}</h1>
-<div class="flex flex-wrap gap-3 mb-8">
-    <a href="{% url 'doctor_reset_password' doctor.pk %}" class="bg-amber-500 hover:bg-amber-600 text-gray-900 px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Reset Password</a>
-    <a href="{% url 'doctor_edit' doctor.pk %}" class="bg-navy-500 hover:bg-navy-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Edit</a>
-    <a href="{% url 'doctor_delete' doctor.pk %}" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete</a>
-  </div>
+  <a href="{% url 'doctors' %}" class="back-link">← Back to Doctors</a>
 </div>
 
 <div class="detail-card" style="background: linear-gradient(180deg, rgba(237, 243, 255, 0.96), rgba(255, 255, 255, 0.96)); border: 1px solid rgba(29, 53, 130, 0.16); box-shadow: 0 25px 45px rgba(29, 53, 130, 0.16);">
@@ -16,18 +12,24 @@
         <i class="fa fa-user-md"></i>
       </div>
       <div>
-        <p class="detail-card-eyebrow">Doctor Profile</p>
-        <h2>{{ doctor.doctors_name }}</h2>
+        <h2>Dr. {{ doctor.doctors_name }}</h2>
         <p class="detail-card-subtitle">{{ doctor.specialization|default:"General" }} • {{ doctor.category|default:"Unassigned" }}</p>
       </div>
     </div>
     <div class="detail-card-meta">
-      {% if doctor.is_active_consultant %}
-        <span class="status-pill status-pill-active">Active Consultant</span>
-      {% else %}
-        <span class="status-pill status-pill-inactive">Inactive Consultant</span>
-      {% endif %}
-      <span class="status-pill">MD ID: {{ doctor.pk_emddoctors|default:"—" }}</span>
+      <div class="flex flex-wrap gap-2 items-center">
+        {% if doctor.is_active_consultant %}
+          <span class="status-pill status-pill-active">Active Consultant</span>
+        {% else %}
+          <span class="status-pill status-pill-inactive">Inactive Consultant</span>
+        {% endif %}
+        <span class="status-pill">MD ID: {{ doctor.pk_emddoctors|default:"—" }}</span>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <a href="{% url 'doctor_reset_password' doctor.pk %}" class="bg-amber-500 hover:bg-amber-600 text-gray-900 px-4 py-2 rounded-lg font-semibold shadow hover:shadow-md transition-all duration-200 text-sm">Reset Password</a>
+        <a href="{% url 'doctor_edit' doctor.pk %}" class="bg-navy-500 hover:bg-navy-600 text-white px-4 py-2 rounded-lg font-semibold shadow hover:shadow-md transition-all duration-200 text-sm">Edit</a>
+        <a href="{% url 'doctor_delete' doctor.pk %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow hover:shadow-md transition-all duration-200 text-sm">Delete</a>
+      </div>
     </div>
   </div>
 
@@ -126,7 +128,6 @@
   </div>
 </div>
 
-<!-- <h2>Professional Fee Transactions</h2> -->
 {% if transactions %}
   <div class="table-responsive">
     <table class="data-table">
@@ -150,11 +151,6 @@
       </tbody>
     </table>
   </div>
-{% else %}
-  <!-- <p>No transactions for this doctor.</p> -->
 {% endif %}
 
-<div class="back-link">
-  <a href="{% url 'doctors' %}">← Back to Doctors</a>
-</div>
 {% endblock %}
