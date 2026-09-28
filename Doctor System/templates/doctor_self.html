@@ -3,6 +3,7 @@
 {% load static %}
 {% block content %}
 {% load static %}
+{% load humanize %}
 <script src="{% static 'js/doctor_profile.js' %}"></script>
 <div class="page-header flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 pb-6 border-b-2 border-gray-200">
   <div>
@@ -127,7 +128,7 @@
     </div>
 
     <div class="card card-transactions">
-      <div class="card-title">Income Statements</div>
+      <div class="card-title">Statement of Account</div>
       <div class="card-value">{{ transaction_count|abbrev }}</div>
       <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
@@ -141,120 +142,69 @@
 
   <!-- Other sections (Transactions, Patients, SOA) remain the same -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Transactions Section -->
+    <!-- Released Checks Section -->
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <i class="fa fa-file-invoice text-blue-500"></i>
-        Recent Income Statements
+        <!-- <i class="fa fa-check-circle text-emerald-500"></i> -->
+        Released Checks
       </h3>
 
-      {% if transactions %}
+      {% if released_checks %}
         <div class="table-responsive">
           <table class="data-table w-full">
             <thead>
               <tr class="bg-gray-50">
-                <th>Date</th>
-                <th>Patient</th>
+                <th>Check No</th>
+                <th>Check Date</th>
                 <th>Amount</th>
-                <th>Reference</th>
               </tr>
             </thead>
             <tbody>
-              {% for t in transactions|slice:":10" %}
+              {% for check in released_checks %}
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="font-medium">{{ t.date }}</td>
-                  <td>{{ t.patient.first_name }} {{ t.patient.last_name }}</td>
-                  <td class="font-bold text-green-600">₱ {{ t.amount }}</td>
-                  <td>{{ t.reference|default:"—" }}</td>
+                  <td class="font-medium">{{ check.checkno }}</td>
+                  <td>{{ check.checkdate|date:"m/d/Y"|default:"—" }}</td>
+                  <td class="font-bold">₱ {{ check.amount|floatformat:2|intcomma }}</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       {% else %}
-        <!-- <div class="text-center py-12">
-          <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i> -->
-          <!-- <p class="text-xl text-gray-500">No transactions yet</p> -->
-        <!-- </div> -->
+        <p class="text-gray-500 py-6">No released checks found.</p>
       {% endif %}
-
-      <!-- Recent PF (Reports) -->
-      <div class="mt-10">
-        <!-- <h4 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"> -->
-          <!-- <i class="fa fa-file-alt text-emerald-500"></i> -->
-          <!-- Recent PF Reports -->
-        <!-- </h4> -->
-        {% if recent_pf_reports %}
-          <div class="table-responsive">
-            <table class="data-table w-full">
-              <thead>
-                <tr class="bg-gray-50">
-                  <th>Check No</th>
-                  <th>Check Date</th>
-                  <th>Report Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for r in recent_pf_reports %}
-                  <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="font-medium">{{ r.checkno }}</td>
-                    <td>{{ r.checkdate|date:"m/d/Y"|default:"—" }}</td>
-
-                    <td>{{ r.report_type }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="text-center py-10">
-            <i class="fa fa-inbox text-6xl text-gray-400 mb-4"></i>
-            <!-- <p class="text-xl text-gray-500">No PF reports yet</p> -->
-          </div>
-        {% endif %}
-      </div>
     </div>
 
 
-    <!-- Patients Section -->
+    <!-- Unreleased Checks Section -->
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <i class="fa fa-users text-blue-500"></i>
-        Connected Patients
+        <!-- <i class="fa fa-hourglass-half text-amber-500"></i> -->
+        Unreleased Checks
       </h3>
-      <br>
-      {% if patients or report_patients %}
+      {% if unreleased_checks %}
         <div class="table-responsive">
           <table class="data-table w-full">
             <thead>
               <tr class="bg-gray-50">
-                <th>Patient Name</th>
-                <th>Discharge Date</th>
+                <th>Check No</th>
+                <th>Check Date</th>
+                <th>Amount</th>
               </tr>
             </thead>
             <tbody>
-              {% for p in patients|slice:":12" %}
+              {% for check in unreleased_checks %}
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="font-medium">
-                    {{ p.last_name }}{% if p.first_name %}, {{ p.first_name|slice:":1" }}.{% endif %}
-                  </td>
-                  <td>—</td>
-                </tr>
-              {% endfor %}
-              {% for rp in report_patients|slice:":10" %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="font-medium">{{ rp.display_name }}</td>
-                  <td>{{ rp.discharge_date|date:"m/d/Y"|default:"—" }}</td>
+                  <td class="font-medium">{{ check.checkno }}</td>
+                  <td>{{ check.checkdate|date:"m/d/Y"|default:"—" }}</td>
+                  <td class="font-bold">₱ {{ check.amount|floatformat:2|intcomma }}</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       {% else %}
-        <div class="text-center py-12">
-          <i class="fa fa-users text-6xl text-gray-400 mb-4"></i>
-          <p class="text-xl text-gray-500">No patients connected yet</p>
-        </div>
+        <p class="text-gray-500 py-6">No unreleased checks found.</p>
       {% endif %}
     </div>
   </div>
@@ -280,7 +230,7 @@
             {% for s in soa_list %}
               <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
                 <td class="font-medium">{{ s.start_date }} - {{ s.end_date }}</td>
-                <td class="font-bold text-2xl text-green-600">₱ {{ s.filtered_total }}</td>
+                <td class="font-bold text-2xl">₱ {{ s.filtered_total|floatformat:2|intcomma }}</td>
                 <td>{{ s.created_at|date:'M d, Y' }}</td>
               </tr>
             {% endfor %}
