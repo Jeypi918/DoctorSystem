@@ -10,18 +10,22 @@
   <div class="card card-doctors">
     <div class="card-title">Released Checks</div>
     <div class="card-value">{{ released_count|default:"0"|abbrev }}</div>
+    <div class="mt-2 text-sm">₱{{ released_amount|abbrev }} Released</div>
     <a href="{% url 'released_checks' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-patients">
     <div class="card-title">Unreleased Checks</div>
     <div class="card-value">{{ unreleased_count|default:"0"|abbrev }}</div>
+    <div class="mt-2 text-sm">₱{{ unreleased_amount|abbrev }} Pending</div>
     <a href="{% url 'unreleased_checks' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 
   <div class="card card-transactions">
-    <div class="card-title">Outstanding Report</div>
+    <div class="card-title">Outstanding Reports</div>
     <div class="card-value">{{ outstanding_count|default:"0"|abbrev }}</div>
+    <div class="mt-2 text-sm">Total amount: <span class="font-bold">₱{{ outstanding_amount|abbrev }}</span></div>
+    <div class="mt-1 text-sm">Total balance: <span class="font-bold">₱{{ outstanding_balance|abbrev }}</span></div>
     <a href="{% url 'outstanding_report' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 

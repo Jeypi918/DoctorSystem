@@ -56,7 +56,28 @@
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.discharge_date|date:"m/d/Y"|default:"—" }}</td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.patientnameinitials|default:"—" }}</td>               
                 
-                <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarkdetail|default:"—" }}</td>
+                <td class="px-4 py-4 text-center text-sm text-gray-900">
+                    <span
+                        class="cursor-help"
+                        title="{{ rc.remarkdetail }}"
+                    >
+                        {{ rc.remarkdetail|truncatechars:50 }}
+                    </span>
+
+                    {% if rc.remarkdetail|length > 50 %}
+                        <div class="mt-1">
+                            <details class="inline">
+                                <summary class="inline cursor-pointer text-xs text-blue-600 underline">
+                                    View Full Text
+                                </summary>
+
+                                <div class="mt-1 text-xs text-gray-700 break-words">
+                                    {{ rc.remarkdetail }}
+                                </div>
+                            </details>
+                        </div>
+                    {% endif %}
+                </td>
                 <td class="px-4 py-4 text-center whitespace-nowrap text-sm  font-bold text-gray-900">{{ rc.amount|ph_money }}</td>
                 {% if request.user.userprofile.role != 'doctor' %}
                 <!-- <td class="px-4 py-4 text-center whitespace-nowrap text-sm font-medium text-gray-900">{{ rc.remarks|default:"—" }}</td> -->

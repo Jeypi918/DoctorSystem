@@ -1,32 +1,100 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
+from django.db.models import OuterRef, Subquery
 from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile
 
-class SignUpForm(UserCreationForm):
-    first_name = forms.CharField(max_length=150, label='First Name')
-    last_name = forms.CharField(max_length=150, label='Last Name')
-    email = forms.EmailField(max_length=254, help_text='Required. Enter a valid email address.')
-    role = forms.ChoiceField(choices=UserProfile.ROLE_CHOICES, label='Role')
-    specialty = forms.CharField(max_length=255, label='Specialty', required=False, widget=forms.TextInput(attrs={'class': 'form-input'}))
+
+def doctor_records_with_accounts():
+    account_username = User.objects.filter(pk=OuterRef('doctorsid')).values('username')[:1]
+    return EmdDoctor.objects.annotate(
+        linked_account_username=Subquery(account_username),
+    ).order_by('doctors_name')
+
+
+class DoctorRecordChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, doctor):
+        details = [f"ID {doctor.pk_emddoctors}"]
+        if doctor.prcno:
+            details.append(f"PRC {doctor.prcno}")
+        if doctor.email:
+            details.append(doctor.email)
+        if not doctor.active:
+            details.append('Inactive')
+        return f"{doctor.doctors_name} ({' | '.join(details)})"
+
+
+class ManagedUserCreateForm(forms.ModelForm):
+    role = forms.ChoiceField(choices=[('', 'Select role')] + UserProfile.ROLE_CHOICES)
+    doctor = DoctorRecordChoiceField(queryset=EmdDoctor.objects.none(), required=False)
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'role', 'specialty')
+        fields = ('username', 'first_name', 'last_name', 'email')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['doctor'].queryset = doctor_records_with_accounts()
+        self.fields['doctor'].label = 'Doctor record'
+        self.fields['doctor'].help_text = 'All doctor records are listed. Records linked to another account cannot be selected.'
+        self.fields['doctor'].widget.attrs['class'] = 'form-input'
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-input'
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.is_staff = True
-        if self.cleaned_data['role'] == 'admin':
-            user.is_superuser = True
+        user.set_unusable_password()
         if commit:
             user.save()
-            UserProfile.objects.get_or_create(user=user, defaults={'role': self.cleaned_data['role']})
-            if self.cleaned_data['role'] == 'doctor':
-                specialty = self.cleaned_data.get('specialty', 'General')
-                # Handled by views now
         return user
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('role') == 'doctor' and not cleaned_data.get('doctor'):
+            self.add_error('doctor', 'Select the existing doctor record for this account.')
+        elif cleaned_data.get('role') != 'doctor' and cleaned_data.get('doctor'):
+            self.add_error('doctor', 'Only doctor accounts can be linked to a doctor record.')
+        return cleaned_data
+
+
+class ManagedUserUpdateForm(forms.ModelForm):
+    role = forms.ChoiceField(choices=[('', 'Select role')])
+    doctor = DoctorRecordChoiceField(queryset=EmdDoctor.objects.none(), required=False)
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'is_active')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].choices = [('', 'Select role')] + UserProfile.ROLE_CHOICES
+        self.fields['doctor'].label = 'Doctor record'
+        self.fields['doctor'].queryset = doctor_records_with_accounts()
+        self.fields['doctor'].help_text = 'All doctor records are listed. Records linked to another account cannot be selected.'
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-input'
+        try:
+            self.fields['role'].initial = self.instance.userprofile.role
+        except UserProfile.DoesNotExist:
+            pass
+        linked_doctor = EmdDoctor.objects.filter(doctorsid=self.instance.pk).order_by('pk_emddoctors').first()
+        if linked_doctor:
+            self.fields['doctor'].initial = linked_doctor
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('role') == 'doctor' and not cleaned_data.get('doctor'):
+            self.add_error('doctor', 'Select the existing doctor record for this account.')
+        elif cleaned_data.get('role') != 'doctor' and cleaned_data.get('doctor'):
+            self.add_error('doctor', 'Only doctor accounts can be linked to a doctor record.')
+        return cleaned_data
+
+
+class ManagedUserPasswordForm(SetPasswordForm):
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(user, *args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-input'
 
 # ===== EMD DOCTOR FORMS =====
 class EmdDoctorForm(forms.ModelForm):

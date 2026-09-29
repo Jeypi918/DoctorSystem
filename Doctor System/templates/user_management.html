@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-none mx-auto px-4 py-8 lg:px-2">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+      <p class="text-sm text-gray-600 mt-2">Manage sign-in accounts and their access.</p>
+    </div>
+    <a href="{% url 'user_management_add' %}" class="bg-navy-500 hover:bg-navy-600 text-white px-5 py-3 rounded-lg font-semibold flex items-center gap-2">
+      <i class="fa fa-plus"></i> Create account
+    </a>
+  </div>
+
+  {% for message in messages %}
+    <div class="mb-4 p-3 rounded border border-gray-200 bg-white text-gray-800">{{ message }}</div>
+  {% endfor %}
+
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-bold uppercase">Account</th>
+            <th class="px-4 py-3 text-left text-xs font-bold uppercase">Role</th>
+            <th class="px-4 py-3 text-left text-xs font-bold uppercase">Doctor record</th>
+            <th class="px-4 py-3 text-left text-xs font-bold uppercase">Status</th>
+            <th class="px-4 py-3 text-right text-xs font-bold uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for row in rows %}
+            <tr>
+              <td class="px-4 py-3">
+                <div class="font-semibold text-gray-900">{{ row.user.username }}</div>
+                <div class="text-sm text-gray-600">{{ row.user.get_full_name|default:row.user.email }}</div>
+              </td>
+              <td class="px-4 py-3 text-sm">{{ row.role }}</td>
+              <td class="px-4 py-3 text-sm">
+                {% if row.multiple_doctors %}Multiple links{% elif row.doctor %}{{ row.doctor }}{% elif row.role == 'Doctor' or row.role == 'doctor' %}Not linked{% else %}Not applicable{% endif %}
+              </td>
+              <td class="px-4 py-3 text-sm">
+                {% if row.user.is_active %}<span class="text-green-700">Active</span>{% else %}<span class="text-red-700">Deactivated</span>{% endif %}
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <a class="text-blue-700 hover:underline mr-3" href="{% url 'user_management_edit' row.user.pk %}">Edit</a>
+                <a class="text-blue-700 hover:underline" href="{% url 'user_management_password' row.user.pk %}">Reset password</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="px-4 py-10 text-center text-gray-500">No accounts found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

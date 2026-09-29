@@ -122,19 +122,21 @@
   <div class="cards mb-8">
 
     <div class="card card-patients">
-      <div class="card-title">List of Patients</div>
+      <div class="card-title">Discharged Patients (since 2025)</div>
       <div class="card-value">{{ patient_count|abbrev }}</div>
       <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
 
     <div class="card card-transactions">
       <div class="card-title">Statement of Account</div>
-      <div class="card-value">{{ transaction_count|abbrev }}</div>
+      <div class="card-value text-5xl">₱{{total_soa_amount|abbrev}}</div>
+      <div class="text-sm mt-2">Total Earnings Since 2025</div>
+      <div class="text-xs opacity-80 mt-1">{{ transaction_count|intcomma }} SOA Records</div>
       <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
 
     <div class="card card-statements">
-      <div class="card-title">PF Transaction</div>
+      <div class="card-title">For Processing</div>
       <div class="card-value">{{ statement_count }}</div>
       <a href="{% url 'statements' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
     </div>
@@ -146,33 +148,57 @@
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <!-- <i class="fa fa-check-circle text-emerald-500"></i> -->
-        Released Checks
+        Recent Released Checks
       </h3>
 
-      {% if released_checks %}
-        <div class="table-responsive">
-          <table class="data-table w-full">
-            <thead>
-              <tr class="bg-gray-50">
-                <th>Check No</th>
-                <th>Check Date</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for check in released_checks %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="font-medium">{{ check.checkno }}</td>
-                  <td>{{ check.checkdate|date:"m/d/Y"|default:"—" }}</td>
-                  <td class="font-bold">₱ {{ check.amount|floatformat:2|intcomma }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <div class="mb-5 rounded-xl bg-emerald-50 border border-emerald-100 p-4">
+        <div class="text-sm font-semibold text-emerald-800">Released Amount (Top 10)</div>
+        <div class="text-2xl font-bold text-gray-900">₱{{ recent_released_total|intcomma }}</div>
+      </div>
+
+      <!-- <form method="get" class="mb-5 flex flex-wrap items-end gap-3">
+        <div>
+          <label for="released-date-from" class="block text-sm font-medium text-gray-700">From</label>
+          <input id="released-date-from" type="date" name="date_from" value="{{ date_from }}" class="mt-1 rounded-lg border border-gray-300 px-3 py-2">
         </div>
-      {% else %}
-        <p class="text-gray-500 py-6">No released checks found.</p>
-      {% endif %}
+        <div>
+          <label for="released-date-to" class="block text-sm font-medium text-gray-700">To</label>
+          <input id="released-date-to" type="date" name="date_to" value="{{ date_to }}" class="mt-1 rounded-lg border border-gray-300 px-3 py-2">
+        </div>
+        <button type="submit" class="btn btn-primary px-4 py-2">Filter</button>
+        {% if date_from or date_to %}
+          <a href="?" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Clear</a>
+        {% endif %}
+      </form> -->
+
+      <div class="table-responsive">
+        <table class="data-table w-full">
+          <thead>
+            <tr class="bg-gray-50">
+              <th>Check No</th>
+              <th>Check Date</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for check in released_checks %}
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="font-medium">{{ check.checkno }}</td>
+                <td>{{ check.checkdate|date:"m/d/Y"|default:"—" }}</td>
+                <td class="font-bold">₱{{ check.amount|floatformat:2|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="py-6 text-center text-gray-500">No released checks found.</td></tr>
+            {% endfor %}
+          </tbody>
+          <!-- <tfoot>
+            <tr class="border-t-2 border-gray-200">
+              <td colspan="2" class="font-bold">Total amount</td>
+              <td class="font-bold">₱ {{ released_table_total|floatformat:2|intcomma }}</td>
+            </tr>
+          </tfoot> -->
+        </table>
+      </div>
     </div>
 
 
@@ -180,8 +206,12 @@
     <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-xl">
       <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <!-- <i class="fa fa-hourglass-half text-amber-500"></i> -->
-        Unreleased Checks
+        Recent Unreleased Checks
       </h3>
+      <div class="mb-5 rounded-xl bg-amber-50 border border-amber-100 p-4">
+        <div class="text-sm font-semibold text-amber-800">Unreleased Amount (Top 10)</div>
+        <div class="text-2xl font-bold text-gray-900">₱{{ recent_unreleased_total|intcomma }}</div>
+      </div>
       {% if unreleased_checks %}
         <div class="table-responsive">
           <table class="data-table w-full">
@@ -197,7 +227,7 @@
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="font-medium">{{ check.checkno }}</td>
                   <td>{{ check.checkdate|date:"m/d/Y"|default:"—" }}</td>
-                  <td class="font-bold">₱ {{ check.amount|floatformat:2|intcomma }}</td>
+                  <td class="font-bold">₱{{ check.amount|intcomma }}</td>
                 </tr>
               {% endfor %}
             </tbody>

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load abbreviate_tags %}
+{% load humanize %}
 {% block content %}
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b-2 border-gray-200">
   <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Welcome, {{ welcome_display }}</h1>
@@ -16,20 +17,36 @@
 {% endif %}
 
 
-  <div class="card card-patients">
-    <div class="card-title">List of Patients</div>
-    <div class="card-value">{{ patient_count|abbrev }}</div>
-    <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
-  </div>
+  {% if request.user.userprofile.role == 'doctor' %}
+    <div class="card card-patients">
+      <div class="card-title">Discharged Patients (since 2025)</div>
+      <div class="card-value">{{ patient_count|abbrev }}</div>
+      <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
 
-  <div class="card card-transactions">
-    <div class="card-title">Statement of Account</div>
-    <div class="card-value">{{ transaction_count|abbrev }}</div>
-    <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
-  </div>
+    <div class="card card-transactions">
+      <div class="card-title">Statement of Account</div>
+      <div class="card-value text-5xl">₱{{total_soa_amount|abbrev}}</div>
+      <div class="text-sm mt-2">Total Earnings Since 2025</div>
+      <div class="text-xs opacity-80 mt-1">{{ transaction_count|intcomma }} SOA Records</div>
+      <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+  {% else %}
+    <div class="card card-patients">
+      <div class="card-title">List of Patients</div>
+      <div class="card-value">{{ patient_count|abbrev }}</div>
+      <a href="{% url 'patients' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="card card-transactions">
+      <div class="card-title">Statement of Account</div>
+      <div class="card-value">{{ transaction_count|abbrev }}</div>
+      <a href="{% url 'transactions' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+  {% endif %}
 
   <div class="card card-statements">
-    <div class="card-title">PF Transaction</div>
+    <div class="card-title">For Processing</div>
     <div class="card-value">{{ statement_count }}</div>
     <a href="{% url 'statements' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>

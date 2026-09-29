@@ -1,5 +1,7 @@
 from datetime import datetime, date
+import secrets
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
@@ -8,11 +10,11 @@ from django.views.generic import ListView
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.contrib import messages
-from django.db.models import Q
-from django.db import IntegrityError, connection
+from django.db.models import Q, Sum
+from django.db import IntegrityError, connection, transaction
 from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable, APV, CheckReport, Patientlist
 
-from .forms import SignUpForm, EmdDoctorForm, PatientForm, PFTransactionForm, StatementOfAccountForm
+from .forms import ManagedUserCreateForm, ManagedUserUpdateForm, ManagedUserPasswordForm, EmdDoctorForm, PatientForm, PFTransactionForm, StatementOfAccountForm
 from .decorators import admin_required, doctor_required, billing_required, accounting_required
 
 def staff_required(view_func):
@@ -20,27 +22,8 @@ def staff_required(view_func):
 
 # ===== AUTHENTICATION VIEWS =====
 def signup_view(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            role_value = form.cleaned_data['role']
-            print(f"DEBUG: Setting role '{role_value}' (type {type(role_value)}) for user '{user.username}' (profile created: {created})")
-            profile.role = role_value
-            profile.save()
-            print(f"DEBUG: Profile saved. Final role: '{profile.role}'")
-            # Verify DB
-            profile.refresh_from_db()
-            print(f"DEBUG: After refresh role: '{profile.role}'")
-            login(request, user)
-            return redirect('home')
-    else:
-        form = SignUpForm()
-    return render(request, 'signup.html', {'form': form})
+    messages.info(request, 'Accounts are created by an administrator. Please contact your administrator.')
+    return redirect('login')
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -60,61 +43,246 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+
+def _doctor_temporary_password(doctor):
+    if not doctor or not doctor.last_name or not doctor.birthdate:
+        return None
+
+    birthdate = doctor.birthdate
+    if isinstance(birthdate, str):
+        for date_format in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%m/%d/%Y', '%d/%m/%Y'):
+            try:
+                birthdate = datetime.strptime(birthdate.strip(), date_format).date()
+                break
+            except ValueError:
+                continue
+    elif isinstance(birthdate, datetime):
+        birthdate = birthdate.date()
+
+    if not isinstance(birthdate, date):
+        return None
+
+    return f"{doctor.last_name.strip().title()}{birthdate.month:02d}{birthdate.year:04d}"
+
+
+def _issue_temporary_password(request, user, doctor=None):
+    temporary_password = _doctor_temporary_password(doctor)
+    uses_doctor_format = temporary_password is not None
+    if temporary_password is None:
+        temporary_password = secrets.token_urlsafe(18)
+    user.set_password(temporary_password)
+    user.save(update_fields=['password'])
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.must_change_password = True
+    profile.save(update_fields=['must_change_password'])
+    request.session[f'temporary_password_{user.pk}'] = temporary_password
+    request.session[f'temporary_password_uses_doctor_format_{user.pk}'] = uses_doctor_format
+    return redirect('user_management_temporary_password', user_id=user.pk)
+
+
+@login_required(login_url='login')
+def password_change_required_view(request):
+    form = ManagedUserPasswordForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        profile = request.user.userprofile
+        profile.must_change_password = False
+        profile.save(update_fields=['must_change_password'])
+        update_session_auth_hash(request, request.user)
+        messages.success(request, 'Your password has been changed.')
+        return redirect('home')
+    return render(request, 'password_change_required.html', {'form': form})
+
+
+@admin_required
+def user_management_list_view(request):
+    roles = dict(UserProfile.ROLE_CHOICES)
+    profile_roles = dict(UserProfile.objects.values_list('user_id', 'role'))
+    doctor_links = {}
+    for doctor in EmdDoctor.objects.filter(doctorsid__isnull=False).order_by('pk_emddoctors'):
+        doctor_links.setdefault(doctor.doctorsid, []).append(doctor.doctors_name)
+
+    rows = []
+    for user in User.objects.order_by('username'):
+        linked_doctors = doctor_links.get(user.pk, [])
+        rows.append({
+            'user': user,
+            'role': roles.get(profile_roles.get(user.pk), 'Unassigned'),
+            'doctor': linked_doctors[0] if len(linked_doctors) == 1 else None,
+            'multiple_doctors': len(linked_doctors) > 1,
+        })
+    return render(request, 'user_management.html', {'rows': rows})
+
+
+@admin_required
+def user_management_create_view(request):
+    form = ManagedUserCreateForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        doctor = form.cleaned_data.get('doctor')
+        role = form.cleaned_data['role']
+        with transaction.atomic():
+            locked_doctor = None
+            if doctor:
+                locked_doctor = EmdDoctor.objects.select_for_update().get(pk=doctor.pk_emddoctors)
+                if (
+                    locked_doctor.doctorsid is not None
+                    and User.objects.filter(pk=locked_doctor.doctorsid).exists()
+                ):
+                    form.add_error('doctor', 'That doctor record is already linked to an account.')
+                    return render(request, 'user_management_form.html', {
+                        'form': form, 'title': 'Create account',
+                    })
+
+            user = form.save()
+            user.is_staff = role == 'admin'
+            user.is_superuser = False
+            user.save(update_fields=['is_staff', 'is_superuser'])
+            UserProfile.objects.update_or_create(
+                user=user,
+                defaults={'role': role, 'must_change_password': True},
+            )
+            if locked_doctor:
+                locked_doctor.doctorsid = user.pk
+                locked_doctor.save(update_fields=['doctorsid'])
+
+        return _issue_temporary_password(
+            request, user, doctor if role == 'doctor' else None,
+        )
+    return render(request, 'user_management_form.html', {
+        'form': form, 'title': 'Create account',
+    })
+
+
+@admin_required
+def user_management_update_view(request, user_id):
+    managed_user = get_object_or_404(User, pk=user_id)
+    form = ManagedUserUpdateForm(request.POST or None, instance=managed_user)
+    if request.method == 'POST' and form.is_valid():
+        role = form.cleaned_data['role']
+        doctor = form.cleaned_data.get('doctor')
+        active = form.cleaned_data['is_active']
+        try:
+            current_role = managed_user.userprofile.role
+        except UserProfile.DoesNotExist:
+            current_role = None
+
+        if managed_user.pk == request.user.pk and (not active or role != current_role):
+            form.add_error(None, 'You cannot deactivate your own account or change your own role.')
+        elif (
+            current_role == 'admin'
+            and managed_user.is_active
+            and (role != 'admin' or not active)
+            and UserProfile.objects.filter(role='admin', user__is_active=True).count() <= 1
+        ):
+            form.add_error(None, 'The last active administrator cannot be demoted or deactivated.')
+
+        if form.errors:
+            return render(request, 'user_management_form.html', {
+                'form': form, 'title': f'Edit {managed_user.username}',
+                'managed_user': managed_user,
+            })
+
+        with transaction.atomic():
+            doctor_ids = Q(doctorsid=managed_user.pk)
+            if doctor:
+                doctor_ids |= Q(pk_emddoctors=doctor.pk_emddoctors)
+            locked_doctors = list(
+                EmdDoctor.objects.select_for_update().filter(doctor_ids).order_by('pk_emddoctors')
+            )
+            locked_doctor = next(
+                (item for item in locked_doctors if doctor and item.pk_emddoctors == doctor.pk_emddoctors),
+                None,
+            )
+            if (
+                doctor
+                and locked_doctor
+                and locked_doctor.doctorsid not in (None, managed_user.pk)
+                and User.objects.filter(pk=locked_doctor.doctorsid).exists()
+            ):
+                form.add_error('doctor', 'That doctor record is already linked to another account.')
+                return render(request, 'user_management_form.html', {
+                    'form': form, 'title': f'Edit {managed_user.username}',
+                    'managed_user': managed_user,
+                })
+
+            managed_user = form.save()
+            managed_user.is_staff = role == 'admin'
+            if role != 'admin':
+                managed_user.is_superuser = False
+            managed_user.save(update_fields=['is_staff', 'is_superuser'])
+            UserProfile.objects.update_or_create(user=managed_user, defaults={'role': role})
+            EmdDoctor.objects.filter(doctorsid=managed_user.pk).update(doctorsid=None)
+            if locked_doctor:
+                locked_doctor.doctorsid = managed_user.pk
+                locked_doctor.save(update_fields=['doctorsid'])
+
+        messages.success(request, f'Account for {managed_user.username} updated.')
+        return redirect('user_management')
+    return render(request, 'user_management_form.html', {
+        'form': form, 'title': f'Edit {managed_user.username}',
+        'managed_user': managed_user,
+    })
+
+
+@admin_required
+def user_management_password_view(request, user_id):
+    managed_user = get_object_or_404(User, pk=user_id)
+    if request.method == 'POST':
+        try:
+            role = managed_user.userprofile.role
+        except UserProfile.DoesNotExist:
+            role = None
+        doctor = EmdDoctor.objects.filter(doctorsid=managed_user.pk).first() if role == 'doctor' else None
+        return _issue_temporary_password(request, managed_user, doctor)
+    return render(request, 'user_password_reset.html', {
+        'managed_user': managed_user,
+    })
+
+
+@admin_required
+def user_management_temporary_password_view(request, user_id):
+    managed_user = get_object_or_404(User, pk=user_id)
+    password = request.session.pop(f'temporary_password_{managed_user.pk}', None)
+    uses_doctor_format = request.session.pop(
+        f'temporary_password_uses_doctor_format_{managed_user.pk}', False,
+    )
+    if not password:
+        messages.error(request, 'That temporary password has already been viewed or expired.')
+        return redirect('user_management')
+    return render(request, 'user_temporary_password.html', {
+        'managed_user': managed_user,
+        'temporary_password': password,
+        'uses_doctor_format': uses_doctor_format,
+    })
+
 # ===== DASHBOARD VIEW =====
 @login_required(login_url='login')
 def get_current_doctor(request):
-    """Resolve the logged-in doctor profile from the doctor username.
-
-    Recent reset scheme uses a linked doctorsid and username like:
-      LASTNAME + FIRSTINITIAL (Title case last name, uppercase initial)
-      Example: "AbbariaoA".
-
-    Legacy parsing still supports older username formats such as:
-      LASTNAME + MMYY or LASTNAME + pk_emddoctors.
-    """
+    """Resolve a doctor from an explicit account link or a unique legacy username."""
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'doctor':
-        print(f"get_current_doctor: Role check failed for {request.user.username}")
         return None
 
     username = (request.user.username or '').strip()
-    print(f"get_current_doctor DEBUG: username='{username}'")
     if not username:
         return None
 
-    # Prefer a direct user-to-doctor link when available.
-    linked_doctors = list(EmdDoctor.objects.filter(doctorsid=request.user.id, active=True))
     import re
 
-    def username_matches_doctor(username, doctor):
-        m2 = re.match(r'^(?P<lastname>[A-Za-z]+)(?P<initial>[A-Z])?$', username)
-        if not m2:
-            return False
-        username_lastname = m2.group('lastname').lower()
-        username_initial = m2.group('initial')
-        doctor_lastname = (doctor.last_name or '').strip().lower()
-        if doctor_lastname != username_lastname:
-            return False
-        if username_initial:
-            doctor_first_initial = ((doctor.first_name or '').strip()[:1] or '').upper()
-            return doctor_first_initial == username_initial
-        return True
-
+    linked_doctors = list(EmdDoctor.objects.filter(doctorsid=request.user.pk))
     if linked_doctors:
-        for d in linked_doctors:
-            if username_matches_doctor(username, d):
-                return d
+        return linked_doctors[0] if len(linked_doctors) == 1 and linked_doctors[0].active else None
 
-        if len(linked_doctors) == 1:
-            print(f"get_current_doctor: linked doctor mismatch for {username}, falling back to username-based lookup")
-        else:
-            print(f"get_current_doctor: duplicate doctorsid found for {username}, but no linked doctor matched username; falling back to general lookup")
+    active_doctors = EmdDoctor.objects.filter(active=True)
 
-    m = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
-    if m:
-        prefix = m.group('prefix').strip().upper()
-        digits = m.group('digits')
+    def unique_match(candidates):
+        matches = list(candidates)
+        return matches[0] if len(matches) == 1 else None
 
-        # First try: interpret trailing digits as MMYY (use last 4 digits)
+    match = re.match(r'^(?P<prefix>.+?)(?P<digits>\d{4,6})$', username)
+    if match:
+        prefix = match.group('prefix').strip()
+        digits = match.group('digits')
+
         mm_yy = digits[-4:]
         try:
             month = int(mm_yy[:2])
@@ -124,49 +292,48 @@ def get_current_doctor(request):
             year2 = None
 
         if month and 1 <= month <= 12:
-            candidates = EmdDoctor.objects.filter(active=True, prcexpdate__isnull=False, prcexpdate__month=month)
-            candidates = [d for d in candidates if d.prcexpdate and (d.prcexpdate.year % 100) == year2]
+            candidates = [
+                doctor for doctor in active_doctors.filter(
+                    prcexpdate__isnull=False, prcexpdate__month=month,
+                )
+                if doctor.prcexpdate and doctor.prcexpdate.year % 100 == year2
+                and doctor.last_name.strip().upper() == prefix.upper()
+            ]
+            match_doctor = unique_match(candidates)
+            if match_doctor:
+                return match_doctor
 
-            for d in candidates:
-                name = (d.doctors_name or '').strip()
-                last_token = name.split(',', 1)[0].strip().upper() if ',' in name else name.split()[0].strip().upper()
-                if last_token == prefix:
-                    return d
-
-        # Legacy fallback: LASTNAME + pk_emddoctors (original scheme)
         try:
             doctor_pk = int(digits)
-            candidates = EmdDoctor.objects.filter(active=True, pk_emddoctors=doctor_pk)
-            for cand in candidates:
-                if prefix.lower() in cand.doctors_name.lower():
-                    return cand
+            candidate = active_doctors.filter(pk_emddoctors=doctor_pk).first()
+            if candidate and candidate.last_name.strip().upper() == prefix.upper():
+                return candidate
         except ValueError:
             pass
 
-    # New username format without trailing digits: LASTNAME + FIRSTINITIAL
     username_match = re.match(r'^(?P<lastname>[A-Za-z]+)(?P<initial>[A-Z])$', username)
     if username_match:
         username_lastname = username_match.group('lastname').strip().lower()
         username_initial = username_match.group('initial')
-        candidates = EmdDoctor.objects.filter(active=True)
-        for d in candidates:
-            doctor_lastname = (d.last_name or '').strip().lower()
-            doctor_first_initial = ((d.first_name or '').strip()[:1] or '').upper()
-            if doctor_lastname == username_lastname and doctor_first_initial == username_initial:
-                return d
+        candidates = [
+            doctor for doctor in active_doctors
+            if doctor.last_name.strip().lower() == username_lastname
+            and (doctor.first_name.strip()[:1] or '').upper() == username_initial
+        ]
+        match_doctor = unique_match(candidates)
+        if match_doctor:
+            return match_doctor
 
-    # Fallback: match lastname only if possible
     username_lastname_only = re.match(r'^(?P<lastname>[A-Za-z]+)$', username)
     if username_lastname_only:
         username_lastname = username_lastname_only.group('lastname').strip().lower()
-        candidate = EmdDoctor.objects.filter(active=True).filter(doctors_name__istartswith=username_lastname).first()
-        if candidate:
-            return candidate
+        candidates = [
+            doctor for doctor in active_doctors
+            if doctor.last_name.strip().lower() == username_lastname
+        ]
+        return unique_match(candidates)
 
-    # Final fallback
-    fallback = EmdDoctor.objects.filter(active=True).first()
-    print(f"FALLBACK to {fallback.doctors_name if fallback else 'NONE'} for {username}")
-    return fallback
+    return None
 
 
 
@@ -186,6 +353,17 @@ def home_view(request):
         ).count()
         unreleased_count = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name).count()
         outstanding_count = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
+        total_soa_amount = (
+            (ReleasedCheck.objects.filter(
+                Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
+            ).aggregate(total=Sum('amount'))['total'] or 0)
+            + (UnreleasedCheck.objects.filter(
+                payeename__icontains=my_doctor.doctors_name
+            ).aggregate(total=Sum('amount'))['total'] or 0)
+            + (OutstandingPayable.objects.filter(
+                Vendor__icontains=my_doctor.doctors_name
+            ).aggregate(total=Sum('amount'))['total'] or 0)
+        )
         apv_count = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
         check_report_count = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
     else:
@@ -228,6 +406,7 @@ def home_view(request):
         'doctor_count': doctor_count,
         'patient_count': patient_count,
         'transaction_count': transaction_count,
+        'total_soa_amount': total_soa_amount if my_doctor else 0,
         'statement_count': statement_count,
         'welcome_display': welcome_display,
     })
@@ -272,100 +451,14 @@ def doctor_detail_view(request, pk):
     transactions = PFTransaction.objects.filter(doctor=doctor)
     return render(request, 'doctor_detail.html', {'doctor': doctor, 'transactions': transactions})
 
-@login_required(login_url='login')
-@staff_required
+@admin_required
 def doctor_reset_password_view(request, pk):
     doctor = get_object_or_404(EmdDoctor, pk_emddoctors=pk)
-
-    # New reset scheme:
-    #   username seed: LASTNAME + FIRSTINITIAL (Title case last name, uppercase initial)
-    #   password seed: LASTNAME + birthdate MMYY
-    #   Example: "Abbariao, Anne" + birthdate=1999-05-14 => username=AbbariaoA password=Abbariao0599
-
-    if not doctor.prcno:
-        return render(request, 'confirm_reset.html', {
-            'doctor': doctor, 'error': 'PRC No required for reset.'
-        })
-
-    lastname_token = (doctor.last_name or '').strip()
-    firstname_token = (doctor.first_name or '').strip()
-    lastname_title = lastname_token.title() if lastname_token else 'Doctor'
-    first_initial = firstname_token[:1].upper() if firstname_token else ''
-
-    birthdate = None
-    if doctor.birthdate:
-        if isinstance(doctor.birthdate, str):
-            for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%m/%d/%Y', '%d/%m/%Y'):
-                try:
-                    birthdate = datetime.strptime(doctor.birthdate.strip(), fmt).date()
-                    break
-                except ValueError:
-                    continue
-        elif isinstance(doctor.birthdate, datetime):
-            birthdate = doctor.birthdate.date()
-        else:
-            birthdate = doctor.birthdate
-
-    if birthdate:
-        suffix = f"{birthdate.month:02d}{birthdate.year % 100:02d}"
-        password = f"{lastname_title}{suffix}"
-    else:
-        # If birthdate is missing or invalid, keep legacy fallback to avoid breaking resets.
-        password = f"{lastname_title}{doctor.pk_emddoctors}"
-
-    username = f"{lastname_title}{first_initial}"
-
-    # Get or create User
-    user, created = User.objects.get_or_create(
-        username=username,
-        defaults={'is_staff': True, 'is_active': True}
-    )
-    if created:
-        user.set_unusable_password()
-
-    # Ensure profile
-    UserProfile.objects.get_or_create(
-        user=user, defaults={'role': 'doctor'}
-    )
-
-    # Link doctorsid
-    doctor.doctorsid = user.id
-    doctor.save(update_fields=['doctorsid'])
-
-    # IMPORTANT: do not reset until the confirmation POST.
-    if request.method == 'POST':
-        # Only perform the reset if user clicked the confirm button.
-        if request.POST.get('confirm_reset') != '1':
-            return render(request, 'confirm_reset.html', {
-                'doctor': doctor,
-                'username': username,
-                'new_password': password,
-            })
-
-        # Update username/email/name to match doctor account expectations.
-        if username:
-            user.username = username
-
-        user.first_name = getattr(doctor, 'first_name', '') or ''
-        user.last_name = getattr(doctor, 'last_name', '') or ''
-
-        # If you store doctor email in emddoctors column, this will set it.
-        # (If the column doesn't exist, it will silently ignore due to getattr.)
-        email_value = getattr(doctor, 'email_doctors', None) or getattr(doctor, 'email', None)
-        if email_value:
-            user.email = email_value
-
-        user.set_password(password)
-        user.save()
-        messages.success(request, f'Reset for {doctor.doctors_name}. Username: {username} Password: {password}')
-        return redirect('doctor_detail', pk=pk)
-
-
-    return render(request, 'confirm_reset.html', {
-        'doctor': doctor,
-        'username': username,
-        'new_password': password,
-    })
+    user = User.objects.filter(pk=doctor.doctorsid).first()
+    if not user:
+        messages.error(request, 'This doctor record is not linked to a user account. Link or create the account in User Management first.')
+        return redirect('user_management')
+    return redirect('user_management_password', user_id=user.pk)
 
 @login_required(login_url='login')
 @staff_required
@@ -506,12 +599,44 @@ def my_doctor_view(request):
     print(f"DEBUG: patient_count={patient_count}, transaction_count(PF total)={transaction_count}, statement_count={statement_count}")
 
     # Recent released and unreleased checks for this doctor
-    released_checks = ReleasedCheck.objects.filter(
+    released_checks_queryset = ReleasedCheck.objects.filter(
         Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
-    ).order_by('-checkdate').values('checkno', 'checkdate', 'amount')[:10]
-    unreleased_checks = UnreleasedCheck.objects.filter(
+    )
+    unreleased_checks_queryset = UnreleasedCheck.objects.filter(
         payeename__icontains=my_doctor.doctors_name
-    ).order_by('-checkdate').values('checkno', 'checkdate', 'amount')[:10]
+    )
+
+    recent_released_checks = list(
+        released_checks_queryset.order_by('-checkdate').values('checkno', 'checkdate', 'amount')[:10]
+    )
+    recent_unreleased_checks = list(
+        unreleased_checks_queryset.order_by('-checkdate').values('checkno', 'checkdate', 'amount')[:10]
+    )
+
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    released_table_queryset = released_checks_queryset
+    if date_from:
+        released_table_queryset = released_table_queryset.filter(checkdate__gte=date_from)
+    if date_to:
+        released_table_queryset = released_table_queryset.filter(checkdate__lte=date_to)
+
+    if date_from or date_to:
+        released_checks = list(
+            released_table_queryset.order_by('-checkdate').values('checkno', 'checkdate', 'amount')
+        )
+        released_table_total = released_table_queryset.aggregate(total=Sum('amount'))['total'] or 0
+    else:
+        released_checks = recent_released_checks
+        released_table_total = sum(check['amount'] for check in recent_released_checks)
+
+    total_soa_amount = (
+        (released_checks_queryset.aggregate(total=Sum('amount'))['total'] or 0)
+        + (unreleased_checks_queryset.aggregate(total=Sum('amount'))['total'] or 0)
+        + (OutstandingPayable.objects.filter(
+            Vendor__icontains=my_doctor.doctors_name
+        ).aggregate(total=Sum('amount'))['total'] or 0)
+    )
 
     return render(request, 'doctor_self.html', {
         'doctor': my_doctor,
@@ -523,7 +648,13 @@ def my_doctor_view(request):
         'transaction_count': transaction_count,
         'statement_count': statement_count,
         'released_checks': released_checks,
-        'unreleased_checks': unreleased_checks,
+        'recent_released_total': sum(check['amount'] for check in recent_released_checks),
+        'released_table_total': released_table_total,
+        'unreleased_checks': recent_unreleased_checks,
+        'recent_unreleased_total': sum(check['amount'] for check in recent_unreleased_checks),
+        'total_soa_amount': total_soa_amount,
+        'date_from': date_from,
+        'date_to': date_to,
     })
 
 # ===== PATIENT VIEWS =====
@@ -641,19 +772,31 @@ class TransactionListView(ListView):
         context = super().get_context_data(**kwargs)
         my_doctor = get_current_doctor(self.request)
         if my_doctor:
-            context['released_count'] = ReleasedCheck.objects.filter(
+            released_checks = ReleasedCheck.objects.filter(
                 Q(payee__icontains=my_doctor.doctors_name) | Q(vendorname__icontains=my_doctor.doctors_name)
-            ).count()
-            context['unreleased_count'] = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name).count()
-            context['outstanding_count'] = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name).count()
+            )
+            unreleased_checks = UnreleasedCheck.objects.filter(payeename__icontains=my_doctor.doctors_name)
+            outstanding_reports = OutstandingPayable.objects.filter(Vendor__icontains=my_doctor.doctors_name)
             context['apv_count'] = APV.objects.filter(payee_name__icontains=my_doctor.doctors_name).count()
             context['check_report_count'] = CheckReport.objects.filter(payto__icontains=my_doctor.doctors_name).count()
         else:
-            context['released_count'] = ReleasedCheck.objects.count()
-            context['unreleased_count'] = UnreleasedCheck.objects.count()
-            context['outstanding_count'] = OutstandingPayable.objects.count()
+            released_checks = ReleasedCheck.objects.all()
+            unreleased_checks = UnreleasedCheck.objects.all()
+            outstanding_reports = OutstandingPayable.objects.all()
             context['apv_count'] = APV.objects.count()
             context['check_report_count'] = CheckReport.objects.count()
+
+        context['released_count'] = released_checks.count()
+        context['released_amount'] = released_checks.aggregate(total=Sum('amount'))['total'] or 0
+        context['unreleased_count'] = unreleased_checks.count()
+        context['unreleased_amount'] = unreleased_checks.aggregate(total=Sum('amount'))['total'] or 0
+        context['outstanding_count'] = outstanding_reports.count()
+        outstanding_totals = outstanding_reports.aggregate(
+            amount=Sum('amount'),
+            balance=Sum('balance'),
+        )
+        context['outstanding_amount'] = outstanding_totals['amount'] or 0
+        context['outstanding_balance'] = outstanding_totals['balance'] or 0
         return context
 
 class ReleasedCheckListView(ListView):

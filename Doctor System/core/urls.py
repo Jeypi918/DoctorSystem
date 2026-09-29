@@ -5,8 +5,14 @@ urlpatterns = [
     # ===== AUTH =====
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
+    path('account/change-password/', views.password_change_required_view, name='password_change_required'),
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
+    path('users/', views.user_management_list_view, name='user_management'),
+    path('users/add/', views.user_management_create_view, name='user_management_add'),
+    path('users/<int:user_id>/edit/', views.user_management_update_view, name='user_management_edit'),
+    path('users/<int:user_id>/reset-password/', views.user_management_password_view, name='user_management_password'),
+    path('users/<int:user_id>/temporary-password/', views.user_management_temporary_password_view, name='user_management_temporary_password'),
     
     # ===== DOCTORS =====
     path('doctors/', views.DoctorListView.as_view(), name='doctors'),

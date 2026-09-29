@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="mb-6 pb-5 border-b border-gray-200">
+    <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+    {% if managed_user %}<p class="mt-2 text-sm text-gray-600">Update account details, role, doctor link, or access status.</p>{% else %}<p class="mt-2 text-sm text-gray-600">A doctor account’s temporary password is Lastname + birth month and year (MMYYYY), based on the linked doctor record. Other accounts receive a random temporary password. Users must change it at first sign-in.</p>{% endif %}
+  </div>
+
+  <form method="post" class="bg-white p-6 rounded-lg shadow">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="mb-4 text-red-700">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {% for field in form %}
+        <div class="form-group {% if field.name == 'doctor' %}md:col-span-2{% endif %} {% if field.name == 'is_active' %}flex items-center gap-3{% endif %}">
+          <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700">{{ field.label }}</label>
+          {% if field.name == 'doctor' %}
+            <input id="doctor-record-search" type="search" class="form-input mb-3" placeholder="Search doctor name, ID, PRC, email, or specialty">
+            <div class="max-h-96 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-200" id="doctor-record-options">
+              <label class="block p-3 hover:bg-gray-50 cursor-pointer" data-doctor-option data-search="no doctor record">
+                <input type="radio" name="{{ field.html_name }}" value="" {% if not field.value %}checked{% endif %}>
+                <span class="ml-2 font-medium text-gray-800">No doctor record</span>
+                <span class="block ml-6 text-sm text-gray-500">Choose this only for non-doctor accounts.</span>
+              </label>
+              {% for doctor_record in field.field.queryset %}
+                <label class="block p-3 hover:bg-gray-50 cursor-pointer" data-doctor-option data-search="{{ doctor_record.doctors_name|lower }} {{ doctor_record.pk_emddoctors }} {{ doctor_record.prcno|lower }} {{ doctor_record.email|default:''|lower }} {{ doctor_record.specialization|default:''|lower }} {{ doctor_record.specialize|default:''|lower }}">
+                  <input type="radio" name="{{ field.html_name }}" value="{{ doctor_record.pk_emddoctors }}" {% if field.value|stringformat:'s' == doctor_record.pk_emddoctors|stringformat:'s' %}checked{% endif %} {% if doctor_record.linked_account_username and doctor_record.doctorsid != managed_user.pk %}disabled{% endif %}>
+                  <span class="ml-2 font-semibold text-gray-900">{{ doctor_record.doctors_name }}</span>
+                  {% if not doctor_record.active %}<span class="ml-2 text-xs font-semibold text-red-700">Inactive</span>{% endif %}
+                  {% if doctor_record.linked_account_username and doctor_record.doctorsid != managed_user.pk %}<span class="ml-2 text-xs font-semibold text-amber-800">Linked to {{ doctor_record.linked_account_username }} (account ID {{ doctor_record.doctorsid }})</span>{% elif doctor_record.doctorsid and not doctor_record.linked_account_username %}<span class="ml-2 text-xs font-semibold text-amber-800">Legacy link ID {{ doctor_record.doctorsid }} (no matching account)</span>{% endif %}
+                  <span class="block ml-6 text-sm text-gray-600">
+                    Doctor ID: {{ doctor_record.pk_emddoctors }}
+                    {% if doctor_record.prcno %}| PRC: {{ doctor_record.prcno }}{% endif %}
+                    {% if doctor_record.email %}| {{ doctor_record.email }}{% endif %}
+                  </span>
+                  {% if doctor_record.specialization or doctor_record.specialize %}
+                    <span class="block ml-6 text-sm text-gray-500">Specialty: {{ doctor_record.specialization|default:doctor_record.specialize }}</span>
+                  {% endif %}
+                </label>
+              {% empty %}
+                <p class="p-3 text-sm text-gray-500">No doctor records are available.</p>
+              {% endfor %}
+            </div>
+          {% else %}
+            {{ field }}
+          {% endif %}
+          {% if field.help_text %}<small class="block text-gray-500">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<span class="block text-sm text-red-700">{{ error }}</span>{% endfor %}
+          {% if field.name == 'doctor' %}<small class="block text-gray-500">Required for doctor accounts; leave empty for other roles.</small>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if managed_user and managed_user.pk == request.user.pk %}<p class="mt-4 text-sm text-amber-800">Your own role and access status cannot be changed here.</p>{% endif %}
+    <div class="mt-6 flex gap-3">
+      <button type="submit" class="bg-navy-500 hover:bg-navy-600 text-white px-5 py-2 rounded font-semibold">Save account</button>
+      <a href="{% url 'user_management' %}" class="px-5 py-2 border border-gray-300 rounded text-gray-700">Cancel</a>
+    </div>
+  </form>
+</div>
+<script>
+  const doctorSearch = document.getElementById('doctor-record-search');
+  const doctorOptions = document.querySelectorAll('[data-doctor-option]');
+  doctorSearch?.addEventListener('input', () => {
+    const query = doctorSearch.value.trim().toLowerCase();
+    doctorOptions.forEach((option) => {
+      option.hidden = !option.dataset.search.includes(query);
+    });
+  });
+</script>
+{% endblock %}
