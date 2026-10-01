@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, date
 import secrets
 from django.contrib.auth import login, authenticate, logout
@@ -11,6 +12,7 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.db.models import Q, Sum
+from django.utils import timezone
 from django.db import IntegrityError, connection, transaction
 from .models import EmdDoctor, Patient, PFTransaction, StatementOfAccount, UserProfile, ReleasedCheck, UnreleasedCheck, OutstandingPayable, APV, CheckReport, Patientlist
 
@@ -401,6 +403,192 @@ def home_view(request):
     except AttributeError:
         welcome_display = request.user.username
 
+    doctor_analytics = None
+    if my_doctor and request.user.userprofile.role == 'doctor':
+        today = timezone.localdate()
+
+        def normalize_date(value):
+            if isinstance(value, datetime):
+                if timezone.is_aware(value):
+                    value = timezone.localtime(value)
+                return value.date()
+            return value
+
+        coverage_start = date(2025, 1, 1)
+        months = []
+        month_cursor = coverage_start
+        while month_cursor <= today.replace(day=1):
+            months.append(month_cursor)
+            if month_cursor.month == 12:
+                month_cursor = date(month_cursor.year + 1, 1, 1)
+            else:
+                month_cursor = date(month_cursor.year, month_cursor.month + 1, 1)
+        years = list(range(coverage_start.year, today.year + 1))
+        month_start = today.replace(day=1)
+        current_year_start = date(today.year, 1, 1)
+        try:
+            prior_year_end = today.replace(year=today.year - 1)
+        except ValueError:
+            prior_year_end = date(today.year - 1, 2, 28)
+        prior_year_start = date(today.year - 1, 1, 1)
+
+        doctor_released_checks = ReleasedCheck.objects.filter(
+            Q(payee__icontains=my_doctor.doctors_name)
+            | Q(vendorname__icontains=my_doctor.doctors_name)
+        )
+        collected_checks = doctor_released_checks.filter(
+            Q(releasedate__range=(coverage_start, today))
+            | Q(releasedate__isnull=True, checkdate__range=(coverage_start, today))
+        ).values('checkdate', 'releasedate', 'amount', 'hospplan')
+
+        released_by_month = defaultdict(lambda: defaultdict(float))
+        released_by_year = defaultdict(lambda: defaultdict(float))
+        released_by_mode = defaultdict(float)
+        payment_modes = set()
+        released_total = 0
+        released_ytd = 0
+        released_prior_ytd = 0
+        released_this_month = 0
+        for check in collected_checks:
+            collected_date = normalize_date(check['releasedate'] or check['checkdate'])
+            if not collected_date:
+                continue
+            payment_mode = (check['hospplan'] or '').strip() or 'Unspecified'
+            amount = float(check['amount'] or 0)
+            payment_modes.add(payment_mode)
+            released_by_month[(collected_date.year, collected_date.month)][payment_mode] += amount
+            released_by_year[collected_date.year][payment_mode] += amount
+            released_by_mode[payment_mode] += amount
+            released_total += amount
+            if current_year_start <= collected_date <= today:
+                released_ytd += amount
+            if prior_year_start <= collected_date <= prior_year_end:
+                released_prior_ytd += amount
+            if month_start <= collected_date <= today:
+                released_this_month += amount
+
+        patient_queryset = Patientlist.objects.filter(
+            doctors_code=str(my_doctor.pk_emddoctors),
+            registry_datetime__date__range=(coverage_start, today),
+        )
+        coverage_patient_count = patient_queryset.count()
+        patients_ytd = patient_queryset.filter(
+            registry_datetime__date__range=(current_year_start, today)
+        ).count()
+        patients_prior_ytd = patient_queryset.filter(
+            registry_datetime__date__range=(prior_year_start, prior_year_end)
+        ).count()
+        patients_this_month = patient_queryset.filter(
+            registry_datetime__date__range=(month_start, today)
+        ).count()
+
+        doctor_unreleased_checks = UnreleasedCheck.objects.filter(
+            payeename__icontains=my_doctor.doctors_name
+        )
+        pending_checks = doctor_unreleased_checks.filter(
+            checkdate__range=(coverage_start, today)
+        ).values('checkdate', 'amount')
+        pending_total = 0
+        pending_this_month = 0
+        pending_check_count = 0
+        for check in pending_checks:
+            pending_date = normalize_date(check['checkdate'])
+            if pending_date:
+                amount = float(check['amount'] or 0)
+                pending_total += amount
+                pending_check_count += 1
+                if month_start <= pending_date <= today:
+                    pending_this_month += amount
+
+        next_check_release = doctor_unreleased_checks.filter(
+            checkdate__gte=today
+        ).order_by('checkdate').values_list('checkdate', flat=True).first()
+
+        statements_this_month = StatementOfAccount.objects.filter(
+            doctor=my_doctor,
+            created_at__date__range=(month_start, today),
+        ).count()
+
+        recent_transactions = []
+        recent_released = doctor_released_checks.filter(
+            Q(releasedate__range=(coverage_start, today))
+            | Q(releasedate__isnull=True, checkdate__range=(coverage_start, today))
+        )
+        for check in recent_released.values(
+            'checkno', 'checkdate', 'releasedate', 'amount', 'patientnameinitials'
+        ).order_by('-releasedate', '-checkdate')[:8]:
+            recent_transactions.append({
+                'date': normalize_date(check['releasedate'] or check['checkdate']),
+                'reference': check['checkno'],
+                'patient': check['patientnameinitials'] or '—',
+                'status': 'Released',
+                'amount': check['amount'],
+            })
+
+        for check in doctor_unreleased_checks.filter(
+            checkdate__range=(coverage_start, today)
+        ).values(
+            'checkno', 'checkdate', 'amount', 'patientnameinitials'
+        ).order_by('-checkdate')[:8]:
+            recent_transactions.append({
+                'date': normalize_date(check['checkdate']),
+                'reference': check['checkno'],
+                'patient': check['patientnameinitials'] or '—',
+                'status': 'Pending',
+                'amount': check['amount'],
+            })
+        recent_transactions.sort(key=lambda item: item['date'] or date.min, reverse=True)
+
+        doctor_analytics = {
+            'coverage_start': coverage_start,
+            'coverage_end': today,
+            'released_total': released_total,
+            'released_change_pct': round((released_ytd - released_prior_ytd) / released_prior_ytd * 100, 1) if released_prior_ytd else None,
+            'released_change_abs_pct': abs(round((released_ytd - released_prior_ytd) / released_prior_ytd * 100, 1)) if released_prior_ytd else 0,
+            'patient_total': coverage_patient_count,
+            'patient_change_pct': round((patients_ytd - patients_prior_ytd) / patients_prior_ytd * 100, 1) if patients_prior_ytd else None,
+            'patient_change_abs_pct': abs(round((patients_ytd - patients_prior_ytd) / patients_prior_ytd * 100, 1)) if patients_prior_ytd else 0,
+            'pending_total': pending_total,
+            'pending_check_count': pending_check_count,
+            'next_check_release': normalize_date(next_check_release),
+            'average_pf_per_patient': released_total / coverage_patient_count if coverage_patient_count else 0,
+            'this_month': {
+                'label': today.strftime('%B %Y'),
+                'patients': patients_this_month,
+                'released_pf': released_this_month,
+                'pending_pf': pending_this_month,
+                'soa_created': statements_this_month,
+            },
+            'monthly_labels': [month.strftime('%b %Y') for month in months],
+            'yearly_labels': [str(year) for year in years],
+            'payment_modes': sorted(payment_modes),
+            'released_monthly_datasets': [
+                {
+                    'label': mode,
+                    'data': [round(released_by_month[(month.year, month.month)][mode], 2) for month in months],
+                    'total': round(released_by_mode[mode], 2),
+                }
+                for mode in sorted(payment_modes)
+            ],
+            'released_yearly_datasets': [
+                {
+                    'label': mode,
+                    'data': [round(released_by_year[year][mode], 2) for year in years],
+                }
+                for mode in sorted(payment_modes)
+            ],
+            'payment_mode_labels': sorted(payment_modes),
+            'payment_mode_values': [round(released_by_mode[mode], 2) for mode in sorted(payment_modes)],
+            'payment_mode_summaries': [
+                {
+                    'label': mode,
+                    'amount': round(released_by_mode[mode], 2),
+                    'percentage': round(released_by_mode[mode] / released_total * 100, 1) if released_total else 0,
+                }
+                for mode in sorted(payment_modes)
+            ],
+            'recent_transactions': recent_transactions[:8],
+        }
 
     return render(request, 'home.html', {
         'doctor_count': doctor_count,
@@ -409,6 +597,7 @@ def home_view(request):
         'total_soa_amount': total_soa_amount if my_doctor else 0,
         'statement_count': statement_count,
         'welcome_display': welcome_display,
+        'doctor_analytics': doctor_analytics,
     })
 
 # ===== DOCTOR VIEWS =====

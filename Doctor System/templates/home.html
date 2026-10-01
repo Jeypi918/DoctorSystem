@@ -51,4 +51,200 @@
     <a href="{% url 'statements' %}" class="card-link">View All <i class="fas fa-arrow-right"></i></a>
   </div>
 </div>
+
+{% if doctor_analytics %}
+<section class="doctor-analytics" aria-labelledby="analytics-heading">
+  <div class="analytics-heading">
+    <div>
+      <p class="analytics-eyebrow">Your practice</p>
+      <h2 id="analytics-heading">Performance overview</h2>
+    </div>
+    <span class="analytics-period">Data coverage: {{ doctor_analytics.coverage_start|date:"M Y" }} to {{ doctor_analytics.coverage_end|date:"M Y" }}</span>
+  </div>
+
+  <div class="analytics-summary-grid">
+    <article class="analytics-summary">
+      <span>Total Released PF</span>
+      <strong>₱{{ doctor_analytics.released_total|floatformat:0|intcomma }}</strong>
+      {% if doctor_analytics.released_change_pct is not None %}
+        {% if doctor_analytics.released_change_pct > 0 %}<small class="metric-up">↑ {{ doctor_analytics.released_change_abs_pct }}% vs last year</small>
+        {% elif doctor_analytics.released_change_pct < 0 %}<small class="metric-down">↓ {{ doctor_analytics.released_change_abs_pct }}% vs last year</small>
+        {% else %}<small class="metric-flat">No change vs last year</small>{% endif %}
+      {% else %}<small class="metric-flat">No prior-year baseline</small>{% endif %}
+    </article>
+    <article class="analytics-summary">
+      <span>Total Patients</span>
+      <strong>{{ doctor_analytics.patient_total|intcomma }}</strong>
+      {% if doctor_analytics.patient_change_pct is not None %}
+        {% if doctor_analytics.patient_change_pct > 0 %}<small class="metric-up">↑ {{ doctor_analytics.patient_change_abs_pct }}% vs last year</small>
+        {% elif doctor_analytics.patient_change_pct < 0 %}<small class="metric-down">↓ {{ doctor_analytics.patient_change_abs_pct }}% vs last year</small>
+        {% else %}<small class="metric-flat">No change vs last year</small>{% endif %}
+      {% else %}<small class="metric-flat">No prior-year baseline</small>{% endif %}
+    </article>
+    <article class="analytics-summary">
+      <span>Pending Checks</span>
+      <strong>₱{{ doctor_analytics.pending_total|floatformat:0|intcomma }}</strong>
+      <small class="metric-flat">{{ doctor_analytics.pending_check_count|intcomma }} checks waiting · 2025 to date</small>
+    </article>
+    <article class="analytics-summary">
+      <span>Average PF / Patient</span>
+      <strong>₱{{ doctor_analytics.average_pf_per_patient|floatformat:0|intcomma }}</strong>
+      <small class="metric-flat">Released PF per registered patient</small>
+    </article>
+  </div>
+
+  <section class="this-month" aria-labelledby="this-month-heading">
+    <div class="this-month-heading">
+      <div><p class="analytics-eyebrow">Current activity</p><h2 id="this-month-heading">{{ doctor_analytics.this_month.label }}</h2></div>
+    </div>
+    <div class="this-month-metrics">
+      <div><span>Patients</span><strong>{{ doctor_analytics.this_month.patients|intcomma }}</strong></div>
+      <div><span>Released PF</span><strong>₱{{ doctor_analytics.this_month.released_pf|floatformat:0|intcomma }}</strong></div>
+      <div><span>Pending PF</span><strong>₱{{ doctor_analytics.this_month.pending_pf|floatformat:0|intcomma }}</strong></div>
+      <div><span>SOA Created</span><strong>{{ doctor_analytics.this_month.soa_created|intcomma }}</strong></div>
+    </div>
+  </section>
+
+  <div class="analytics-grid">
+    <article class="analytics-panel">
+      <div class="analytics-panel-heading">
+        <div><h3>Monthly Released PF</h3><p>Monthly trend by payment mode</p></div>
+        <span class="analytics-mark analytics-mark-teal"><i class="fas fa-chart-line"></i></span>
+      </div>
+      <div class="analytics-chart">
+        <canvas id="released-monthly-chart" aria-label="Monthly released professional fees by payment mode" role="img"></canvas>
+      </div>
+    </article>
+
+    <article class="analytics-panel">
+      <div class="analytics-panel-heading">
+        <div><h3>Yearly Released PF</h3><p>Annual collections by payment mode</p></div>
+        <span class="analytics-mark analytics-mark-blue"><i class="fas fa-calendar-check"></i></span>
+      </div>
+      <div class="analytics-chart">
+        <canvas id="released-yearly-chart" aria-label="Yearly released professional fees by payment mode" role="img"></canvas>
+      </div>
+    </article>
+
+    <article class="analytics-panel">
+      <div class="analytics-panel-heading">
+        <div><h3>Payment Mode Breakdown</h3><p>Released PF share · 2025 to date</p></div>
+        <span class="analytics-mark analytics-mark-coral"><i class="fas fa-circle-half-stroke"></i></span>
+      </div>
+      <div class="payment-mode-breakdown">
+        {% if doctor_analytics.payment_mode_summaries %}
+          <div class="payment-mode-chart"><canvas id="payment-mode-chart" aria-label="Released professional fees by payment mode" role="img"></canvas></div>
+          <ul class="payment-mode-legend">
+            {% for mode in doctor_analytics.payment_mode_summaries %}
+              <li><span>{{ mode.label }}</span><strong>{{ mode.percentage }}%</strong></li>
+            {% endfor %}
+          </ul>
+        {% else %}<p class="analytics-empty">No released checks in this coverage period.</p>{% endif %}
+      </div>
+    </article>
+
+    <article class="analytics-panel next-release-panel">
+      <div class="analytics-panel-heading">
+        <div><h3>Next Check Release</h3><p>Earliest unreleased check date</p></div>
+        <span class="analytics-mark analytics-mark-gold"><i class="fas fa-hourglass-half"></i></span>
+      </div>
+      <div class="next-release-value">
+        {% if doctor_analytics.next_check_release %}
+          <strong>{{ doctor_analytics.next_check_release|date:"F Y" }}</strong>
+          <span>{{ doctor_analytics.next_check_release|date:"M j, Y" }}</span>
+        {% else %}
+          <strong>No scheduled date</strong>
+          <span>There are no future unreleased check dates.</span>
+        {% endif %}
+      </div>
+    </article>
+
+  </div>
+</section>
+
+{{ doctor_analytics.monthly_labels|json_script:"analytics-monthly-labels" }}
+{{ doctor_analytics.yearly_labels|json_script:"analytics-yearly-labels" }}
+{{ doctor_analytics.released_monthly_datasets|json_script:"released-monthly-datasets" }}
+{{ doctor_analytics.released_yearly_datasets|json_script:"released-yearly-datasets" }}
+{{ doctor_analytics.payment_mode_labels|json_script:"payment-mode-labels" }}
+{{ doctor_analytics.payment_mode_values|json_script:"payment-mode-values" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const chartData = (id) => JSON.parse(document.getElementById(id).textContent);
+  const chartFont = { family: 'Inter, sans-serif' };
+  const money = (value) => `₱${Number(value).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+  const paymentModeColors = ['#0f857e', '#e3a93b', '#3977a8', '#ed8a62', '#6e8790', '#7b9e6b', '#9b79a8'];
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${money(context.raw)}` } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#69747b', font: chartFont } },
+      y: { beginAtZero: true, grid: { color: '#e9eeeb' }, ticks: { color: '#69747b', font: chartFont, callback: money } }
+    }
+  };
+  const releasedMonthly = chartData('released-monthly-datasets').map((dataset, index) => ({
+    ...dataset,
+    backgroundColor: paymentModeColors[index % paymentModeColors.length],
+    borderRadius: 3,
+    maxBarThickness: 24
+  }));
+  const releasedYearly = chartData('released-yearly-datasets').map((dataset, index) => ({
+    ...dataset,
+    backgroundColor: paymentModeColors[index % paymentModeColors.length],
+    borderRadius: 3,
+    maxBarThickness: 36
+  }));
+  const releasedOptions = {
+    ...commonOptions,
+    scales: {
+      ...commonOptions.scales,
+      x: { ...commonOptions.scales.x, stacked: true },
+      y: { ...commonOptions.scales.y, stacked: true }
+    },
+    plugins: { ...commonOptions.plugins, legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 14, color: '#49575d', font: chartFont } } }
+  };
+  const lineDatasets = chartData('released-monthly-datasets').map((dataset, index) => ({
+    ...dataset,
+    borderColor: paymentModeColors[index % paymentModeColors.length],
+    backgroundColor: paymentModeColors[index % paymentModeColors.length],
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2,
+    tension: 0.3,
+    fill: false
+  }));
+  new Chart(document.getElementById('released-monthly-chart'), {
+    type: 'line',
+    data: { labels: chartData('analytics-monthly-labels'), datasets: lineDatasets },
+    options: { ...commonOptions, interaction: { intersect: false, mode: 'index' }, plugins: releasedOptions.plugins }
+  });
+  new Chart(document.getElementById('released-yearly-chart'), {
+    type: 'bar',
+    data: { labels: chartData('analytics-yearly-labels'), datasets: releasedYearly },
+    options: releasedOptions
+  });
+  const paymentModeCanvas = document.getElementById('payment-mode-chart');
+  if (paymentModeCanvas) {
+    new Chart(paymentModeCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: chartData('payment-mode-labels'),
+        datasets: [{
+          data: chartData('payment-mode-values'),
+          backgroundColor: chartData('payment-mode-values').map((_, index) => paymentModeColors[index % paymentModeColors.length]),
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.label}: ${money(context.raw)}` } } }
+      }
+    });
+  }
+</script>
+{% endif %}
 {% endblock %}
