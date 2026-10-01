@@ -267,6 +267,7 @@ class ReleasedCheck(models.Model):
     remarks = models.CharField(max_length=255, blank=True, null=True, db_column='Remarks')
     admissiontype = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionType')
     admissionno = models.CharField(max_length=50, blank=True, null=True, db_column='AdmissionNo')
+    hospplan = models.CharField(max_length=255, blank=True, null=True, db_column='HospPlan')
     status = models.CharField(max_length=50, blank=True, null=True, db_column='Status')
     patientname = models.CharField(max_length=255, blank=True, null=True, db_column='PatientName')
     patientnameinitials = models.CharField(max_length=50, blank=True, null=True, db_column='PatientName_Initials')
